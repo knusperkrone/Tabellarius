@@ -22,11 +22,15 @@ namespace Tabellarius
 		ALL = 2
 	};
 
-	enum Contract_Text_Typ
+	enum Contract_TextParent_Typ
 	{
 		TITLE = 0,
-		TEXT = 1,
-		SUB_HEADING = 2,
+	};
+
+	enum Contract_TextChild_Typ
+	{
+		TEXT = 0,
+		SUB_HEADING = 1,
 	};
 
 
@@ -104,13 +108,13 @@ namespace Tabellarius
 
 		public static readonly Dictionary<int, string> CategorieTextParentTypHR = new Dictionary<int, string>()
 		{
-			{ (int)Contract_Text_Typ.TITLE, CategorieTextTypParentVal[0] },
+			{ (int)Contract_TextParent_Typ.TITLE, CategorieTextTypParentVal[0] },
 			{ -1, "" }
 		};
 
 		public static readonly Dictionary<string, int> CategorieTextParentTypCR = new Dictionary<string, int>()
 		{
-			{ CategorieTextTypParentVal[0], (int)Contract_Text_Typ.TITLE },
+			{ CategorieTextTypParentVal[0], (int)Contract_TextParent_Typ.TITLE },
 			{ "", -1 }
 		};
 
@@ -122,15 +126,15 @@ namespace Tabellarius
 
 		public static readonly Dictionary<int, string> CategorieTextChildTypHR = new Dictionary<int, string>()
 		{
-			{ (int)Contract_Text_Typ.TEXT, CategorieTextTypChildVal[0] },
-			{ (int)Contract_Text_Typ.SUB_HEADING, CategorieTextTypChildVal[1] },
+			{ (int)Contract_TextChild_Typ.TEXT, CategorieTextTypChildVal[0] },
+			{ (int)Contract_TextChild_Typ.SUB_HEADING, CategorieTextTypChildVal[1] },
 			{ -1, "" }
 		};
 
 		public static readonly Dictionary<string, int> CategorieTextChildTypCR = new Dictionary<string, int>()
 		{
-			{ CategorieTextTypChildVal[0], (int)Contract_Text_Typ.TEXT },
-			{ CategorieTextTypChildVal[1], (int)Contract_Text_Typ.SUB_HEADING },
+			{ CategorieTextTypChildVal[0], (int)Contract_TextChild_Typ.TEXT },
+			{ CategorieTextTypChildVal[1], (int)Contract_TextChild_Typ.SUB_HEADING },
 			{ "", -1 }
 		};
 
@@ -149,6 +153,38 @@ namespace Tabellarius
 		public static string ConvertDatabaseToTreeChild(string s)
 		{
 			return "\t" + s;
+		}
+
+		public static void ClearTimeConflicts(Gtk.TreeStore treeContent, Gtk.TreeIter toCheck)
+		{
+			// Get first Iter with equal time
+			var checkVal = (string)treeContent.GetValue(toCheck, (int)ListColumnID.Uhrzeit);
+			Gtk.TreeIter before = toCheck;
+			Gtk.TreeIter drag = before;
+			while (treeContent.IterPrevious(ref before)) {
+				string refVal = (string)treeContent.GetValue(before, (int)ListColumnID.Uhrzeit);
+				if (refVal.StartsWith(checkVal.Substring(0, 5)))
+					drag = before;
+				else
+					break;
+			}
+
+			// Set all values
+			bool hasNext = true;
+			for (int i = 0; hasNext; i++) {
+				SetRang(treeContent, drag, i);
+				GtkHelper.SortInByColumn(treeContent, (int)ListColumnID.Uhrzeit, drag);
+				hasNext = treeContent.IterNext(ref drag);
+				string refVal = (string)treeContent.GetValue(drag, (int)ListColumnID.Uhrzeit);
+				if (!refVal.StartsWith(checkVal.Substring(0, 5)))
+					break;
+			}
+		}
+
+		private static void SetRang(Gtk.TreeStore store, Gtk.TreeIter iter, int rang)
+		{
+			var val = (string)store.GetValue(iter, (int)ListColumnID.Uhrzeit);
+			store.SetValue(iter, (int)ListColumnID.Uhrzeit, val.Substring(0, 5) + ":" + rang);
 		}
 
 		public static Gtk.TextTag boldTag, italicTag;
