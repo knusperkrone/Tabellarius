@@ -149,7 +149,7 @@ namespace Tabellarius.Database
 					Kategorie_Tab_Titel.Rang AS TitelRang,
 					Kategorie_Tab_Titel.Typ As TitelTyp,
 					Kategorie_Tab_Text.Text AS Text,
-					Kategorie_Tab_Text.Rang AS TextRang
+					Kategorie_Tab_Text.Rang AS TextRang,
 					Kategorie_Tab_Text.Typ AS TextTyp
 
 				FROM Kategorie
@@ -194,6 +194,7 @@ namespace Tabellarius.Database
 					titelList.Add(textList);
 				}
 				tabList.Add(titelList);
+
 			}
 
 			//Save in array
@@ -215,7 +216,7 @@ namespace Tabellarius.Database
 
 			CategorieQuery[][] titleList = cached_CategorieQuery[tabIndex];
 
-			TreeStore treeStore = new Gtk.TreeStore(typeof(int), typeof(string), typeof(string));
+			TreeStore treeStore = new Gtk.TreeStore(typeof(string), typeof(string), typeof(string));
 			TreeIter currIter = TreeIter.Zero;
 
 			foreach (CategorieQuery[] titles in titleList) {
@@ -223,18 +224,22 @@ namespace Tabellarius.Database
 					continue;
 
 				CategorieQuery currElem = titles[0];
-
-				currIter = treeStore.AppendValues(currElem.TitelRang,
+				currIter = treeStore.AppendValues(currElem.TitelRang + "",
 								API_Contract.CategorieTextParentTypHR[currElem.TitelTyp]
 								, currElem.Titel);
+				try {
 
-				if (currElem.Text != null) {
-					foreach (var text in titles) {
-						treeStore.AppendValues(currIter,
-							text.TextRang,
-							API_Contract.CategorieTextChildTypHR[currElem.TextTyp],
-							text.Text);
+					if (currElem.Text != null) {
+						foreach (var text in titles) {
+							treeStore.AppendValues(currIter,
+								text.TextRang + "",
+								API_Contract.CategorieTextChildTypHR[currElem.TextTyp],
+								text.Text);
+						}
 					}
+				} catch (Exception e) {
+					Console.WriteLine(e.ToString());
+					return new Gtk.TreeStore(typeof(int), typeof(string), typeof(string));
 				}
 			}
 			return treeStore;

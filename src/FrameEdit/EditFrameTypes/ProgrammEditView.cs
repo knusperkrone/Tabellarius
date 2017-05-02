@@ -145,8 +145,10 @@ namespace Tabellarius.EditFrameTypes
 
 			if (isTermin) { // Only Parent Nodes can change Time
 				currTreeStore.SetValue(currTreeIter, (int)ListColumnID.Uhrzeit, validTime);
+				// Set new value, sort it in and update UI valiue
 				var iter = GtkHelper.SortInByColumn(currTreeStore, (int)ListColumnID.Uhrzeit, currTreeIter);
-				ClearTimeConflicts(currTreeStore, iter);
+				API_Contract.ClearTimeConflicts(currTreeStore, iter);
+				timeBox.Time = (string)currTreeStore.GetValue(currTreeIter, (int)ListColumnID.Uhrzeit);
 			} else {
 				GtkHelper.SortInByColumn(currTreeStore, (int)ListColumnID.Text, currTreeIter);
 			}
@@ -173,11 +175,6 @@ namespace Tabellarius.EditFrameTypes
 			textEntry.Buffer.Clear();
 			origText = "";
 			Init = false;
-		}
-
-		private void ClearTimeConflicts(TreeStore TreeStore, TreeIter iter)
-		{
-			//TODO:
 		}
 
 		public override void Dispose()
