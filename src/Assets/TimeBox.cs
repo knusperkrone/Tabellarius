@@ -14,8 +14,6 @@ namespace Tabellarius.Assets
 
 		private string origHour, origMin, origPos;
 
-		private delegate void Packer(Widget child, bool expand, bool fill, uint padding);
-
 		public TimeBox(bool start) : base()
 		{
 			invalidColor.Red = invalidColor.Alpha = 1;
@@ -35,18 +33,15 @@ namespace Tabellarius.Assets
 
 			hourEntry.WidthChars = minEntry.WidthChars = posEntry.WidthChars = 5;
 
-			Packer PackHandler;
-			if (start)
-				PackHandler = PackStart;
-			else
-				PackHandler = PackEnd;
+			var tmpBox = new HBox();
+			tmpBox.PackStart(hourLabel, false, false, 5);
+			tmpBox.PackStart(hourEntry, false, false, 5);
+			tmpBox.PackStart(minLabel, false, false, 5);
+			tmpBox.PackStart(minEntry, false, false, 5);
+			tmpBox.PackStart(posLabel, false, false, 5);
+			tmpBox.PackStart(posEntry, false, false, 5);
 
-			PackHandler(hourLabel, false, false, 5);
-			PackHandler(hourEntry, false, false, 5);
-			PackHandler(minLabel, false, false, 5);
-			PackHandler(minEntry, false, false, 5);
-			PackHandler(posLabel, false, false, 5);
-			PackHandler(posEntry, false, false, 5);
+			this.PackStart(tmpBox, false, true, 5); // Middle
 		}
 
 		public bool ValidateTime()
