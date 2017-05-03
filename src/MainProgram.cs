@@ -2,6 +2,7 @@
 using System.IO;
 using System;
 
+
 namespace Tabellarius
 {
 	public class MainProgram
@@ -28,17 +29,21 @@ namespace Tabellarius
 				}
 			}
 
+			GLib.ExceptionManager.UnhandledException += UExecptionHandler;
+
 			// TODO: DatabaseFileChooser Dialog
 			DatabaseAdapter.setDb("backend (copy).db");
 
-			try {
-				MainFrame.GetInstance().ShowAll();
-				Application.Run();
-			} catch (Exception e) {
-				new SafeCallDialog("Das programm hat sich mit folgender Fehlermeldung beendet:\n" + e.ToString(), "Ok", 0, null, 0).Run();
-				Application.Quit();
-			}
+			MainFrame.GetInstance().ShowAll();
+			Application.Run();
+			Application.Quit();
+		}
 
+		public static void UExecptionHandler(UnhandledExceptionEventArgs args) {
+			if (args.IsTerminating)
+				Console.WriteLine(args.ToString());
+			else
+				new SafeCallDialog("Das programm hat sich mit folgender Fehlermeldung beendet:\n" + args.ExceptionObject.ToString(), "Ok", 0, null, 0).Run();
 		}
 
 	}

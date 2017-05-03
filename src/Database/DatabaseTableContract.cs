@@ -9,7 +9,7 @@ namespace Tabellarius.Database
 	{
 		protected static DatabaseAdapter db = DatabaseAdapter.GetInstance();
 
-		public readonly string tableName;
+		public readonly string TableName;
 
 		public abstract int Veranstaltungs_ID { get; }
 
@@ -17,10 +17,12 @@ namespace Tabellarius.Database
 
 		public DatabaseTable(string tableName)
 		{
-			this.tableName = tableName;
+			this.TableName = tableName;
 		}
 
-		public abstract string UpdateString();
+		public abstract string SETString();
+
+		public abstract string UPDATEString();
 	}
 
 
@@ -54,9 +56,17 @@ namespace Tabellarius.Database
 			this.Dauer = dauer;
 		}
 
-		public override string UpdateString()
+		public override string SETString()
 		{
-			return String.Format("ID == {0} AND Kürzel == \"{1}\" AND Name == \"{2}\" AND Sprache == \"{3}\" AND Jahr{4} AND Dauer == {5}", Id, Kürzel, Name, Sprache, Jahr, Dauer);
+
+			return String.Format("Id = '{0}', Kürzel = '{1}', Name = '{2}', Sprache = '{3}', Jahr = '{4}', Dauer = '{5}'",
+								Id, Kürzel, Name, Sprache, Jahr, Dauer);
+		}
+
+		public override string UPDATEString()
+		{
+			return String.Format("ID == '{0}' AND Kürzel == '{1}' AND Name == '{2}' AND Sprache == '{3}' AND Jahr'{4}' AND Dauer == '{5}'",
+								Id, Kürzel, Name, Sprache, Jahr, Dauer);
 		}
 
 	}
@@ -83,9 +93,16 @@ namespace Tabellarius.Database
 			this.StartDatum = startDatum;
 		}
 
-		public override string UpdateString()
+		public override string SETString()
 		{
-			return String.Format("Id_Veranstaltung == {0} AND Id == {1} AND StartDatum == \"{2}\"", Id_Veranstaltung, Id, StartDatum);
+			return String.Format("Id_Veranstaltung = '{0}', Id == '{1}', StartDatum = '{2}'",
+								Id_Veranstaltung, Id, StartDatum);
+		}
+
+		public override string UPDATEString()
+		{
+			return String.Format("Id_Veranstaltung == '{0}' AND Id == '{1}' AND StartDatum == '{2}'",
+								Id_Veranstaltung, Id, StartDatum);
 		}
 	}
 
@@ -116,9 +133,15 @@ namespace Tabellarius.Database
 			this.Typ = typ;
 		}
 
-		public override string UpdateString()
+		public override string SETString() {
+			return String.Format("Id_Veranstaltung = '{0}', Tag = '{1}', Uhrzeit = '{2}', Titel = '{3}', TYP = '{4}'",
+								Id_Veranstaltung, Tag, Uhrzeit, Titel, Typ);
+		}
+
+		public override string UPDATEString()
 		{
-			return String.Format("Id_Veranstaltung == {0} AND Tag == {1} AND Uhrzeit == \"{2}\" AND Titel == \"{3}\" AND TYP == {4}", Id_Veranstaltung, Tag, Uhrzeit, Titel, Typ);
+			return String.Format("Id_Veranstaltung == '{0}' AND Tag == '{1}' AND Uhrzeit == '{2}' AND Titel == '{3}' AND TYP == '{4}'",
+								Id_Veranstaltung, Tag, Uhrzeit, Titel, Typ);
 		}
 	}
 
@@ -152,9 +175,16 @@ namespace Tabellarius.Database
 			this.Typ = typ;
 		}
 
-		public override string UpdateString()
+		public override string SETString()
 		{
-			return String.Format("Id_Veranstaltung == {0} AND Id_Instanz == {1} AND Termin_Tag == {2} AND Termin_Uhrzeit == \"{3}\" AND Text == \"{4}\" AND Typ == {5}", Id_Veranstaltung, Id_Instanz, Termin_Tag, Termin_Uhrzeit, Text, Typ);
+			return String.Format("Id_Veranstaltung = '{0}', Id_Instanz = '{1}', Termin_Tag = '{2}', Termin_Uhrzeit = '{3}', Text = '{4}', Typ = '{5}'",
+								Id_Veranstaltung, Id_Instanz, Termin_Tag, Termin_Uhrzeit, Text, Typ);
+		}
+
+		public override string UPDATEString()
+		{
+			return String.Format("Id_Veranstaltung == '{0}' AND Id_Instanz == '{1}' AND Termin_Tag == '{2}' AND Termin_Uhrzeit == '{3}' AND Text == '{4}' AND Typ == '{5}'",
+								Id_Veranstaltung, Id_Instanz, Termin_Tag, Termin_Uhrzeit, Text, Typ);
 		}
 
 	}
@@ -177,9 +207,16 @@ namespace Tabellarius.Database
 			this.Titel = titel;
 		}
 
-		public override string UpdateString()
+		public override string SETString()
 		{
-			return String.Format("Id_Veranstaltung == {0} AND Titel == \"{1}\"", Id_Veranstaltung, Titel);
+			return String.Format("Id_Veranstaltung = '{0}', Titel = '{1}'",
+								Id_Veranstaltung, Titel);
+		}
+
+		public override string UPDATEString()
+		{
+			return String.Format("Id_Veranstaltung == '{0}' AND Titel == '{1}'",
+								Id_Veranstaltung, Titel);
 		}
 	}
 
@@ -200,17 +237,23 @@ namespace Tabellarius.Database
 
 		public Table_Kategorie_Tab() : base("Kategorie_Tab") { }
 
-		public Table_Kategorie_Tab(string name_kategorie, string tabName, int rang) : base("Kategorie_Tab")
+		public Table_Kategorie_Tab(string tabName, int rang) : base("Kategorie_Tab")
 		{
 			this.Id_Veranstaltung = db.Curr_veranstaltungsId;
-			this.Name_Kategorie = name_kategorie;
+			this.Name_Kategorie = db.Curr_categorie;
 			this.TabName = tabName;
 			this.Rang = rang;
 		}
 
-		public override string UpdateString()
+		public override string SETString()
 		{
-			return String.Format("Id_Veranstaltung == {0} AND Name_Kategorie == \"{1}\" AND TabName == \"{2}\" AND Rang == {3}",
+			return String.Format("Id_Veranstaltung = '{0}', Name_Kategorie = '{1}', TabName = '{2}', Rang = '{3}'",
+								Id_Veranstaltung, Name_Kategorie, TabName, Rang);
+		}
+
+		public override string UPDATEString()
+		{
+			return String.Format("Id_Veranstaltung == '{0}' AND Name_Kategorie == '{1}' AND TabName == '{2}' AND Rang == '{3}'",
 								Id_Veranstaltung, Name_Kategorie, TabName, Rang);
 		}
 	}
@@ -236,19 +279,25 @@ namespace Tabellarius.Database
 
 		public Table_Kategorie_Tab_Titel() : base("Kategorie_Tab_Titel") { }
 
-		public Table_Kategorie_Tab_Titel(int id_Veranstaltung, string name_kategorie, string tabName, string titel, int typ, int rang) : base("Kategorie_Tab_Titel")
+		public Table_Kategorie_Tab_Titel(string tabName, string titel, int typ, int rang) : base("Kategorie_Tab_Titel")
 		{
 			this.Id_Veranstaltung = db.Curr_veranstaltungsId;
-			this.Name_Kategorie = name_kategorie;
+			this.Name_Kategorie = db.Curr_categorie;
 			this.TabName_Kategorie_Tab = tabName;
 			this.Titel = titel;
 			this.Typ = typ;
 			this.Rang = rang;
 		}
 
-		public override string UpdateString()
+		public override string SETString()
 		{
-			return String.Format("Id_Veranstaltung == {0} AND Name_Kategorie == {1} AND TabName_Kategorie_Tab {2} AND Titel == {3} AND Typ {4} AND Rang {5}",
+			return String.Format("Id_Veranstaltung = '{0}', Name_Kategorie = '{1}', TabName_Kategorie_Tab = '{2}', Titel = '{3}', Typ = '{4}', Rang = '{5}'",
+									Id_Veranstaltung, Name_Kategorie, TabName_Kategorie_Tab, Titel, Typ, Rang);
+		}
+
+		public override string UPDATEString()
+		{
+			return String.Format("Id_Veranstaltung == '{0}' AND Name_Kategorie == '{1}' AND TabName_Kategorie_Tab == '{2}' AND Titel == '{3}' AND Typ == '{4}' AND Rang == '{5}'",
 									Id_Veranstaltung, Name_Kategorie, TabName_Kategorie_Tab, Titel, Typ, Rang);
 		}
 	}
@@ -276,10 +325,10 @@ namespace Tabellarius.Database
 
 		public Table_Kategorie_Tab_Text() : base("Kategorie_Tab_Text") { }
 
-		public Table_Kategorie_Tab_Text(int id_Veranstaltung, string name_kategorie,string tabName, string titelName, string text, int typ, int rang) : base("Kategorie_Tab_Text")
+		public Table_Kategorie_Tab_Text(string tabName, string titelName, string text, int typ, int rang) : base("Kategorie_Tab_Text")
 		{
 			this.Id_Veranstaltung = db.Curr_veranstaltungsId;
-			this.Name_Kategorie = name_kategorie;
+			this.Name_Kategorie = db.Curr_categorie;
 			this.TabName_Kategorie_Tab = tabName;
 			this.Titel_Kategorie_Tab_Titel = titelName;
 			this.Text = text;
@@ -287,10 +336,16 @@ namespace Tabellarius.Database
 			this.Rang = rang;
 		}
 
-		public override string UpdateString()
+		public override string SETString()
 		{
-			return String.Format("Id_Veranstaltung == {0} AND Name_Kategorie == {1} AND TabName_Kategorie_Tab == {2} AND Titel_Kategorie_Tab_Titel {3} And Text == {4} AND Typ == {5} AND Rang == {6}",
-								Id_Veranstaltung,Name_Kategorie, TabName_Kategorie_Tab, Titel_Kategorie_Tab_Titel, Text, Typ, Rang);
+			return String.Format("Id_Veranstaltung = '{0}', Name_Kategorie = '{1}', TabName_Kategorie_Tab = '{2}', Titel_Kategorie_Tab_Titel = '{3}', Text = '{4}', Typ = '{5}', Rang = '{6}'",
+								Id_Veranstaltung, Name_Kategorie, TabName_Kategorie_Tab, Titel_Kategorie_Tab_Titel, Text, Typ, Rang);
+		}
+
+		public override string UPDATEString()
+		{
+			return String.Format("Id_Veranstaltung == '{0}' AND Name_Kategorie == '{1}' AND TabName_Kategorie_Tab == '{2}' AND Titel_Kategorie_Tab_Titel == '{3}' AND Text == '{4}' AND Typ == '{5}' AND Rang == '{6}'",
+								Id_Veranstaltung, Name_Kategorie, TabName_Kategorie_Tab, Titel_Kategorie_Tab_Titel, Text, Typ, Rang);
 		}
 	}
 

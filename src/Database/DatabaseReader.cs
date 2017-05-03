@@ -169,8 +169,6 @@ namespace Tabellarius.Database
 				ORDER BY Kategorie.Titel, Kategorie_Tab.Rang, Kategorie_Tab_Titel.Rang, Kategorie_Tab_Text.Rang"
 				, veranstaltungs_id, categorie).ToArray();
 
-
-			Console.WriteLine("Count:" + query.Length + " id:" + veranstaltungs_id + " categorie:" + categorie);
 			var tabList = new List<List<List<CategorieQuery>>>();
 
 			// Make that query on the database and try to visualize it

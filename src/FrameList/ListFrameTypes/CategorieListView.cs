@@ -14,6 +14,7 @@ namespace Tabellarius.ListFramesTypes
 		private int tabs = 0;
 		private Notebook tabView;
 		private List<TreeView> treeList;
+		private string[] tabNames;
 
 		public CategorieListView()
 		{
@@ -25,8 +26,6 @@ namespace Tabellarius.ListFramesTypes
 			tabView = new Notebook();
 			treeList = new List<TreeView>();
 
-			// TODO: Up and Down button
-
 			PopulateTabView();
 
 			AddWithViewport(tabView);
@@ -34,13 +33,13 @@ namespace Tabellarius.ListFramesTypes
 
 		private void PopulateTabView()
 		{
-			string[] tabnames = dbAdapter.GetCategorieTabNames();
-			this.tabs = tabnames.Length;
+			tabNames = dbAdapter.GetCategorieTabNames();
+			this.tabs = tabNames.Length;
 
-			for (int i = 0; i < tabnames.Length; i++) {
+			for (int i = 0; i < tabNames.Length; i++) {
 				var treeStore = dbAdapter.GetTextFrameContentFor(i);
 				var treeView = GenScrollableTree(treeStore);
-				tabView.AppendPage(treeView, new Label(tabnames[i]));
+				tabView.AppendPage(treeView, new Label(tabNames[i]));
 			}
 		}
 
@@ -62,7 +61,7 @@ namespace Tabellarius.ListFramesTypes
 			tabs++;
 			tabView.AppendPage(tabContent, new Label(nameEntry.Text));
 
-			// TODO: Database
+			// TODO: Save on Database
 
 			tabView.ShowAll();
 		}
@@ -104,12 +103,8 @@ namespace Tabellarius.ListFramesTypes
 
 			// TODO:
 
-		}
+			// TODO: Save on Database
 
-		private static int ComputeNewRang(TreeStore treeContent)
-		{
-			// TODO:
-			return -1;
 		}
 
 		protected override ScrolledWindow GenScrollableTree(TreeStore treeContent)
@@ -133,7 +128,8 @@ namespace Tabellarius.ListFramesTypes
 			tree.RulesHint = true;
 			tree.RowActivated += delegate (object sender, RowActivatedArgs args)
 			{
-				editFrameAdapter.PassToEditView((TreeView)sender, args, tabView.CurrentPage);
+				if (tabView.CurrentPage < tabNames.Length)
+					editFrameAdapter.PassToEditView((TreeView)sender, args, tabNames[tabView.CurrentPage]);
 			};
 
 			this.treeList.Add(tree);

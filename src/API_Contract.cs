@@ -157,10 +157,11 @@ namespace Tabellarius
 
 		public static void ClearTimeConflicts(Gtk.TreeStore treeContent, Gtk.TreeIter toCheck)
 		{
+
 			// Get first Iter with equal time
 			var checkVal = (string)treeContent.GetValue(toCheck, (int)ListColumnID.Uhrzeit);
 			Gtk.TreeIter before = toCheck;
-			Gtk.TreeIter drag = before;
+			Gtk.TreeIter drag = toCheck;
 			while (treeContent.IterPrevious(ref before)) {
 				string refVal = (string)treeContent.GetValue(before, (int)ListColumnID.Uhrzeit);
 				if (refVal.StartsWith(checkVal.Substring(0, 5)))
@@ -168,16 +169,17 @@ namespace Tabellarius
 				else
 					break;
 			}
-
 			// Set all values
 			bool hasNext = true;
 			for (int i = 0; hasNext; i++) {
 				SetRang(treeContent, drag, i);
 				GtkHelper.SortInByColumn(treeContent, (int)ListColumnID.Uhrzeit, drag);
 				hasNext = treeContent.IterNext(ref drag);
-				string refVal = (string)treeContent.GetValue(drag, (int)ListColumnID.Uhrzeit);
-				if (!refVal.StartsWith(checkVal.Substring(0, 5)))
-					break;
+				if (hasNext) {
+					string refVal = (string)treeContent.GetValue(drag, (int)ListColumnID.Uhrzeit);
+					if (!refVal.StartsWith(checkVal.Substring(0, 5)))
+						break;
+				}
 			}
 		}
 

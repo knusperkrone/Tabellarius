@@ -99,6 +99,8 @@ namespace Tabellarius.ListFramesTypes
 					insertIter = treeContent.AppendValues(timeBox.DatabaseTime, textEntry.Text);
 					treeContent.GetIterFirst(out firstIter);
 					GtkHelper.SortInByColumn(treeContent, (int)ListColumnID.Uhrzeit, insertIter);
+
+					// TODO: Save on Database
 				}
 			}
 			diag.Destroy();
@@ -131,6 +133,8 @@ namespace Tabellarius.ListFramesTypes
 				insertIter = treeContent.AppendValues(parentIter, "└──", "\t" + userText.Text);
 				treeContent.IterNthChild(out firstIter, parentIter, 0);
 				GtkHelper.SortInByColumn(treeContent, (int)ListColumnID.Text, insertIter);
+
+				// TODO: Save on Database
 			}
 			diag.Destroy();
 

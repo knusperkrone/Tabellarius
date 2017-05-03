@@ -57,7 +57,7 @@ namespace Tabellarius
 		private string curr_categorie;
 		public string Curr_categorie
 		{
-			get { return curr_lang; }
+			get { return curr_categorie; }
 			set
 			{
 				if (value != null)
@@ -140,7 +140,6 @@ namespace Tabellarius
 			return tmp;
 		}
 
-
 		public Gtk.TreeStore GetTextFrameContentFor(int tabIndex)
 		{
 			if (!activeVeranstaltung)
@@ -155,11 +154,11 @@ namespace Tabellarius
 			dbWriter.DbInsert(elem);
 		}
 
-		public void updateEntry(DatabaseTable oldElem, string setStatement)
+		public void updateEntry(DatabaseTable oldElem, DatabaseTable newElem)
 		{
 			if (!init)
 				throw new Exception("DatabaseAdapter is already closed");
-			dbWriter.DbUpdate(oldElem, setStatement);
+			dbWriter.DbUpdate(oldElem, newElem);
 		}
 
 		public void deleteEntry(DatabaseTable elem)

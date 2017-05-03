@@ -32,6 +32,14 @@ namespace Tabellarius
 			currView.EditTreeRow(treeView, args, day);
 		}
 
+		public void PassToEditView(TreeView treeView, RowActivatedArgs args, string tabName)
+		{
+			if (!currView.SaveWithDialog())
+				return;
+
+			currView.EditTreeRow(treeView, args, tabName);
+		}
+
 		public TreeIter GetActiveParentTreeIter()
 		{
 			return currView.currParentIter;

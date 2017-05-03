@@ -1,5 +1,7 @@
 using System;
 using Gtk;
+using Tabellarius.Assets;
+using Tabellarius.Database;
 
 namespace Tabellarius.EditFrameTypes
 {
@@ -14,9 +16,10 @@ namespace Tabellarius.EditFrameTypes
 		private readonly ToggleButton boldButton, italicButton;
 		private readonly Button upButton, downButton;
 		private readonly Button saveButton, cancelButton;
-		private readonly TextView textEntry;
+		private readonly TagTextView textEntry;
 
-		private int origTyp, day;
+		private string tabName;
+		private int origTyp;
 		private string origText;
 
 		private bool init;
@@ -25,6 +28,7 @@ namespace Tabellarius.EditFrameTypes
 			get { return this.init; }
 			set { this.init = textEntry.Editable = value; }
 		}
+
 
 		public CategoryEditView() : base()
 		{
@@ -39,25 +43,25 @@ namespace Tabellarius.EditFrameTypes
 			((Label)boldButton.Child).Markup = "<b>F</b>";
 			((Label)italicButton.Child).Markup = "<i>K</i>";
 
-
 			categoryLabel = new Label(" Typ:");
 			cbTyp = new ComboBox(new string[] { "      " });
 
 			var typBox = new HBox();
-			typBox.PackEnd(cbTyp, false, true, 3);
-			typBox.PackEnd(categoryLabel, false, true, 5);
-			typBox.PackEnd(italicButton, false, false, 0);
-			typBox.PackEnd(boldButton, false, false, 0);
-			typBox.PackEnd(new Label("   "), false, false, 0);
-			typBox.PackEnd(downButton, false, true, 0);
-			typBox.PackEnd(upButton, false, true, 0);
+			typBox.PackStart(new Label(" "), false, false, 0);
+			typBox.PackStart(upButton, false, true, 0);
+			typBox.PackStart(downButton, false, true, 0);
+			typBox.PackStart(new Label(" "), false, false, 0);
+			typBox.PackStart(boldButton, false, false, 0);
+			typBox.PackStart(italicButton, false, false, 0);
+			typBox.PackStart(categoryLabel, false, true, 5);
+			typBox.PackStart(cbTyp, false, true, 3);
 
 			textEntry = new TagTextView(boldButton, italicButton);
 			var font = new Pango.FontDescription() { Family = "Droid Sans" };
 			textEntry.ModifyFont(font);
 			textEntry.Buffer.TagTable.Add(API_Contract.boldTag);
 			textEntry.Buffer.TagTable.Add(API_Contract.italicTag);
-			//textEntry.BorderWidth = 10; // Add some Padding
+			textEntry.BorderWidth = 4; // Add some Padding
 
 			scrollText = new ScrolledWindow();
 			scrollText.ShadowType = ShadowType.EtchedOut;
@@ -71,7 +75,6 @@ namespace Tabellarius.EditFrameTypes
 			var buttonBox = new HBox();
 			buttonBox.PackStart(saveButton, false, true, 5);
 			buttonBox.PackStart(cancelButton, false, true, 2);
-
 			this.PackStart(typBox, false, true, 5);
 			this.PackStart(scrollText, true, true, 5);
 			this.PackStart(buttonBox, false, true, 5);
@@ -79,13 +82,13 @@ namespace Tabellarius.EditFrameTypes
 			// Init values
 			Init = false;
 			cbTyp.Active = origTyp = -1;
-			origText = "";
+			tabName = origText = "";
 		}
 
-		public override void EditTreeRow(TreeView treeView, RowActivatedArgs args, int day)
+		public override void EditTreeRow(TreeView treeView, RowActivatedArgs args, string tabName)
 		{
 			Init = true;
-			this.day = day;
+			this.tabName = tabName;
 
 			currTreeStore = (TreeStore)treeView.Model;
 			TreeIter currIter;
@@ -111,6 +114,7 @@ namespace Tabellarius.EditFrameTypes
 			}
 
 			// Set new values
+			textEntry.Clear();
 			textEntry.Buffer.Clear();
 			var buff = textEntry.Buffer;
 			API_Contract.ConvertDatabaseToEditCategorie(textString, ref buff);
@@ -138,15 +142,41 @@ namespace Tabellarius.EditFrameTypes
 			string typ = GtkHelper.ComboBoxActiveString(cbTyp);
 			string dbString = API_Contract.ConvertEditCategorieToDatabse(textEntry.Buffer);
 
-			// Save on this
-			this.origTyp = cbTyp.Active;
-			this.origText = dbString;
-
 			// Save on Ui
 			currTreeStore.SetValue(currTreeIter, (int)TextColumnID.Typ, cbTyp);
 			currTreeStore.SetValue(currTreeIter, (int)TextColumnID.Text, dbString);
 
-			//TODO: Save in database
+			// Save Database
+			string currText = API_Contract.ConvertEditCategorieToDatabse(textEntry.Buffer);
+			int currRang = int.Parse((string)currTreeStore.GetValue(currTreeIter, (int)TextColumnID.Rang));
+			DatabaseTable orig, elem;
+			if (currParentIter.Equals(currTreeIter)) { // Parent Entry
+				// Adjust childs
+				TreeIter child;
+				if (currTreeStore.IterChildren(out child, currTreeIter)) {
+					do {
+						var childText = (string)currTreeStore.GetValue(child, (int)TextColumnID.Text);
+						var childTyp = (int)currTreeStore.GetValue(child, (int)TextColumnID.Typ);
+						var childRang = (int)currTreeStore.GetValue(child, (int)TextColumnID.Rang);
+						orig = new Table_Kategorie_Tab_Text(tabName, origText, childText, childTyp, childRang);
+						elem = new Table_Kategorie_Tab_Text(tabName, currText, childText, childTyp, childRang);
+						dbAdapter.updateEntry(orig, elem);
+					} while (currTreeStore.IterNext(ref child));
+				}
+				orig = new Table_Kategorie_Tab_Titel(tabName, origText, origTyp, currRang);
+				elem = new Table_Kategorie_Tab_Titel(tabName, currText, cbTyp.Active, currRang);
+
+			} else {
+				var titelName = (string)currTreeStore.GetValue(currParentIter, (int)TextColumnID.Text);
+				orig = new Table_Kategorie_Tab_Text(tabName, titelName, origText, origTyp, currRang);
+				elem = new Table_Kategorie_Tab_Text(tabName, titelName, currText, cbTyp.Active, currRang);
+			}
+			dbAdapter.updateEntry(orig, elem);
+
+			// Save on this
+			this.origTyp = cbTyp.Active;
+			this.origText = dbString;
+
 			return true;
 		}
 
@@ -161,6 +191,7 @@ namespace Tabellarius.EditFrameTypes
 			Init = false;
 			boldButton.Active = italicButton.Active = false;
 			origTyp = cbTyp.Active = -1;
+			textEntry.Clear();
 			textEntry.Buffer.Clear();
 			origText = "";
 		}
@@ -181,11 +212,39 @@ namespace Tabellarius.EditFrameTypes
 				canChange = currTreeStore.IterNext(ref changeIter);
 
 			if (canChange) {
+				// Change on UI
 				string beforePos = (string)currTreeStore.GetValue(changeIter, rangID);
 				currTreeStore.SetValue(currTreeIter, rangID, beforePos);
 				currTreeStore.SetValue(changeIter, rangID, pos);
 				GtkHelper.SortInByColumn(currTreeStore, rangID, currTreeIter);
-				//TODO: Save in Database
+
+				//Save in Database
+				bool isParent = currTreeIter.Equals(currParentIter);
+				Table_Kategorie_Tab_Titel orig, newElem;
+
+				// Get values from ListView
+				var currTitel = (string)currTreeStore.GetValue(currParentIter, (int)TextColumnID.Text);
+				var currText = (string)currTreeStore.GetValue(currTreeIter, (int)TextColumnID.Text);
+				int currTyp;
+				if (isParent)
+					currTyp = API_Contract.CategorieTextParentTypCR[(string)currTreeStore.GetValue(currTreeIter, (int)TextColumnID.Typ)];
+				else
+					currTyp = API_Contract.CategorieTextChildTypCR[(string)currTreeStore.GetValue(currTreeIter, (int)TextColumnID.Typ)];
+				orig = new Table_Kategorie_Tab_Titel(tabName, currTitel, currTyp, int.Parse(pos));
+				newElem = new Table_Kategorie_Tab_Titel(tabName, currTitel, currTyp, int.Parse(beforePos));
+				dbAdapter.updateEntry(orig, newElem);
+
+				// Get only necessary values from ListView
+				currText = (string)currTreeStore.GetValue(changeIter, (int)TextColumnID.Text);
+				if (isParent)
+					currTyp = API_Contract.CategorieTextParentTypCR[(string)currTreeStore.GetValue(currTreeIter, (int)TextColumnID.Typ)];
+				else
+					currTyp = API_Contract.CategorieTextChildTypCR[(string)currTreeStore.GetValue(currTreeIter, (int)TextColumnID.Typ)];
+				orig.Titel = newElem.Titel = currText;
+				orig.Typ = newElem.Typ = currTyp;
+				orig.Rang = int.Parse(beforePos);
+				newElem.Rang = int.Parse(pos);
+				dbAdapter.updateEntry(orig, newElem);
 			}
 		}
 
@@ -200,6 +259,11 @@ namespace Tabellarius.EditFrameTypes
 			saveButton.Dispose();
 			cancelButton.Dispose();
 			base.Dispose();
+		}
+
+		public override void EditTreeRow(TreeView treeView, RowActivatedArgs args, int day)
+		{
+			throw new NotImplementedException();
 		}
 
 	}

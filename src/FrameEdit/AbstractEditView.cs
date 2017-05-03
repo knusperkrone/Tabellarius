@@ -3,12 +3,16 @@ namespace Tabellarius.EditFrameTypes
 {
 	public abstract class AbstractEditView : Gtk.VBox
 	{
+
+		protected DatabaseAdapter dbAdapter = DatabaseAdapter.GetInstance();
+
 		public Gtk.TreeIter currParentIter { get; protected set; }
 		public Gtk.TreeIter currTreeIter { get; protected set; }
 
 		protected abstract bool OnSave();
 		protected abstract void OnCancel(object sender, System.EventArgs args);
 		public abstract void EditTreeRow(Gtk.TreeView treeView, Gtk.RowActivatedArgs args, int day);
+		public abstract void EditTreeRow(Gtk.TreeView treeView, Gtk.RowActivatedArgs args, string tabName);
 		public abstract void Clear();
 		protected abstract bool SaveNecessary();
 

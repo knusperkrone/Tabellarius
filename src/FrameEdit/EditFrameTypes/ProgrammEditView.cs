@@ -32,14 +32,14 @@ namespace Tabellarius.EditFrameTypes
 		public ProgrammEditView() : base()
 		{
 			// Init User Layout
-			timeBox = new TimeBox(false);
+			timeBox = new TimeBox(true);
 
+			typLabel = new Label(" Typ");
 			cbTyp = new ComboBox(new string[] { "     " });
-			typLabel = new Label("Typ");
 
 			var typBox = new HBox();
-			typBox.PackEnd(cbTyp, false, true, 2);
-			typBox.PackEnd(typLabel, false, true, 10);
+			typBox.PackStart(typLabel, false, true, 10);
+			typBox.PackStart(cbTyp, false, true, 2);
 
 			textEntry = new TextView();
 			textEntry.BorderWidth = 10; // Add some Padding
@@ -126,22 +126,36 @@ namespace Tabellarius.EditFrameTypes
 
 			bool isTermin = currTreeIter.Equals(currParentIter);
 
-			if (isTermin && timeBox.IsDirty && currTreeStore.IterHasChild(currTreeIter)) {
+			DatabaseTable orig, newElem;
+			// TODO: Save on Database
+			var origTime = (string)currTreeStore.GetValue(currParentIter, (int)ListColumnID.Uhrzeit);
+			if (isTermin) {
 				// Save child Nodes
 				TreeIter childIter;
-				bool hasNext = currTreeStore.IterChildren(out childIter, currTreeIter);
-				do {
-					//var text = (string)currTreeStore.GetValue(childIter, (int)ListColumnID.Text);
-					//var typ = (int)currTreeStore.GetValue(childIter, (int)ListColumnID.Typ);
-					//var dbElem = new Table_Beschreibung(day, validTime, text, typ);
-					hasNext = currTreeStore.IterNext(ref childIter);
-				} while (hasNext);
-			}
-			//TODO: Save Node
+				if (currTreeStore.IterChildren(out childIter, currTreeIter)) {
+					do {
+						var childText = (string)currTreeStore.GetValue(childIter, (int)ListColumnID.Text);
+						var childTime = (string)currTreeStore.GetValue(childIter, (int)ListColumnID.Uhrzeit);
+						var childTyp = API_Contract.ProgrammDescrTypCR[(string)currTreeStore.GetValue(childIter, (int)ListColumnID.Typ)];
+						orig = new Table_Beschreibung(day, childTime, childText, childTyp);
+						newElem = new Table_Beschreibung(day, validTime, childText, childTyp);
+						dbAdapter.updateEntry(orig, newElem);
+					} while (currTreeStore.IterNext(ref childIter));
+				}
+				orig = new Table_Termin(day, origTime, origText, origTyp);
+				newElem = new Table_Termin(day, validTime, databaseString, cbTyp.Active);
 
-			if (!isTermin) // Add some UI-Candy
+			} else {
+				orig = new Table_Beschreibung(day, origTime, origText, origTyp);
+				newElem = new Table_Beschreibung(day, origTime, databaseString, cbTyp.Active);
+			}
+			dbAdapter.updateEntry(orig, newElem);
+
+			// Add on UI
+			if (!isTermin)
 				databaseString = API_Contract.ConvertDatabaseToTreeChild(databaseString);
 			currTreeStore.SetValue(currTreeIter, (int)ListColumnID.Text, databaseString);
+
 
 			if (isTermin) { // Only Parent Nodes can change Time
 				currTreeStore.SetValue(currTreeIter, (int)ListColumnID.Uhrzeit, validTime);
@@ -153,6 +167,10 @@ namespace Tabellarius.EditFrameTypes
 				GtkHelper.SortInByColumn(currTreeStore, (int)ListColumnID.Text, currTreeIter);
 			}
 
+			// Add on this
+			timeBox.Time = validTime;
+			origText = textEntry.Buffer.Text;
+			origTyp = cbTyp.Active;
 			return true;
 		}
 
@@ -189,5 +207,9 @@ namespace Tabellarius.EditFrameTypes
 			base.Dispose();
 		}
 
+		public override void EditTreeRow(TreeView treeView, RowActivatedArgs args, string tabName)
+		{
+			throw new NotImplementedException();
+		}
 	}
 }

@@ -35,13 +35,16 @@ namespace Tabellarius.Database
 			}
 		}
 
-		public void DbUpdate(DatabaseTable orig, string setValue)
+		public void DbUpdate(DatabaseTable oldElem, DatabaseTable newElem)
 		{
-			// Changing PKs seems to be bad practicse - Lib-API doesn't support it
+			SQLiteCommand cmd = db.CreateCommand("UPDATE " + newElem.TableName +
+												" SET " + newElem.SETString() +
+												" WHERE " + oldElem.UPDATEString());
+			System.Console.WriteLine(cmd.CommandText);
 			try {
-				db.CreateCommand("UPDATE " + orig.tableName + " SET " + setValue + " WHERE " + orig.UpdateString()).ExecuteNonQuery();
-			} catch (SQLiteException) {
-				new WarnWindow("\tDer Eintrag konnte nicht geändert werden\n\tWahrscheinlich ist der Eintrag so schon vorhanden.");
+				cmd.ExecuteNonQuery();
+			} catch (SQLiteException e) {
+				new WarnWindow("\tDer Eintrag konnte nicht geändert werden\n\tWahrscheinlich ist der Eintrag so schon vorhanden.\n" + e.ToString());
 			}
 		}
 

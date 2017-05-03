@@ -24,7 +24,7 @@ namespace Tabellarius.Assets
 
 			origHour = origMin = origPos = "";
 
-			hourLabel = new Label("Stunde");
+			hourLabel = new Label("  Stunde");
 			minLabel = new Label("Minute");
 			posLabel = new Label("Rang");
 
