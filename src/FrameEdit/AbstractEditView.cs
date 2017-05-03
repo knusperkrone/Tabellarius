@@ -11,8 +11,7 @@ namespace Tabellarius.EditFrameTypes
 
 		protected abstract bool OnSave();
 		protected abstract void OnCancel(object sender, System.EventArgs args);
-		public abstract void EditTreeRow(Gtk.TreeView treeView, Gtk.RowActivatedArgs args, int day);
-		public abstract void EditTreeRow(Gtk.TreeView treeView, Gtk.RowActivatedArgs args, string tabName);
+		public abstract void EditTreeRow(Gtk.TreeView treeView, Gtk.RowActivatedArgs args, object tabData);
 		public abstract void Clear();
 		protected abstract bool SaveNecessary();
 

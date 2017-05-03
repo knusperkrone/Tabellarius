@@ -3,17 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 
-namespace Tabellarius.ListFramesTypes
+namespace Tabellarius.ListFrameTypes
 {
 	public class CategorieListView : AbstractListView
 	{
 
 		private DatabaseAdapter dbAdapter;
 		private EditFrameAdapter editFrameAdapter;
-
-		private int tabs = 0;
-		private Notebook tabView;
-		private List<TreeView> treeList;
 		private string[] tabNames;
 
 		public CategorieListView()
@@ -113,9 +109,9 @@ namespace Tabellarius.ListFramesTypes
 			scrollWin.ShadowType = ShadowType.EtchedOut;
 			scrollWin.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
 
-			var rangColumn = new TreeViewColumn("Rang", GenTextCell(), "text", TextColumnID.Rang);
-			var timeColumn = new TreeViewColumn("Typ", GenTextCell(), "text", TextColumnID.Typ);
-			var textColumn = new TreeViewColumn("Text", GenTextCell(), "text", TextColumnID.Text);
+			var rangColumn = new TreeViewColumn("Rang", GenTextCell(), "text", CategorieColumnID.Rang);
+			var timeColumn = new TreeViewColumn("Typ", GenTextCell(), "text", CategorieColumnID.Typ);
+			var textColumn = new TreeViewColumn("Text", GenTextCell(), "text", CategorieColumnID.Text);
 
 			var tree = new TreeView();
 			tree.AppendColumn(rangColumn);

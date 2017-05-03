@@ -85,18 +85,18 @@ namespace Tabellarius.EditFrameTypes
 			tabName = origText = "";
 		}
 
-		public override void EditTreeRow(TreeView treeView, RowActivatedArgs args, string tabName)
+		public override void EditTreeRow(TreeView treeView, RowActivatedArgs args, object tabData)
 		{
 			Init = true;
-			this.tabName = tabName;
+			this.tabName = (string)tabData;
 
-			currTreeStore = (TreeStore)treeView.Model;
 			TreeIter currIter;
-			currTreeStore.GetIter(out currIter, args.Path);
+			this.currTreeStore = (TreeStore)treeView.Model;
+			this.currTreeStore.GetIter(out currIter, args.Path);
 			this.currTreeIter = currIter;
 
-			string typString = (string)currTreeStore.GetValue(currIter, (int)TextColumnID.Typ);
-			string textString = (string)currTreeStore.GetValue(currIter, (int)TextColumnID.Text);
+			string typString = (string)currTreeStore.GetValue(currIter, (int)CategorieColumnID.Typ);
+			string textString = (string)currTreeStore.GetValue(currIter, (int)CategorieColumnID.Text);
 
 			// Get ParentIter and Type
 			if (args.Path.Depth == 1) { // Parent Node
@@ -142,36 +142,36 @@ namespace Tabellarius.EditFrameTypes
 			string typ = GtkHelper.ComboBoxActiveString(cbTyp);
 			string dbString = API_Contract.ConvertEditCategorieToDatabse(textEntry.Buffer);
 
-			// Save on Ui
-			currTreeStore.SetValue(currTreeIter, (int)TextColumnID.Typ, cbTyp);
-			currTreeStore.SetValue(currTreeIter, (int)TextColumnID.Text, dbString);
-
-			// Save Database
+			// Save on Database
 			string currText = API_Contract.ConvertEditCategorieToDatabse(textEntry.Buffer);
-			int currRang = int.Parse((string)currTreeStore.GetValue(currTreeIter, (int)TextColumnID.Rang));
+			int currRang = int.Parse((string)currTreeStore.GetValue(currTreeIter, (int)CategorieColumnID.Rang));
 			DatabaseTable orig, elem;
-			if (currParentIter.Equals(currTreeIter)) { // Parent Entry
+			if (currParentIter.Equals(currTreeIter)) { // Parent
 				// Adjust childs
 				TreeIter child;
 				if (currTreeStore.IterChildren(out child, currTreeIter)) {
 					do {
-						var childText = (string)currTreeStore.GetValue(child, (int)TextColumnID.Text);
-						var childTyp = (int)currTreeStore.GetValue(child, (int)TextColumnID.Typ);
-						var childRang = (int)currTreeStore.GetValue(child, (int)TextColumnID.Rang);
+						var childText = (string)currTreeStore.GetValue(child, (int)CategorieColumnID.Text);
+						int childTyp = API_Contract.CategorieTextChildTypCR[(string)currTreeStore.GetValue(child, (int)CategorieColumnID.Typ)];
+						int childRang = int.Parse((string)currTreeStore.GetValue(child, (int)CategorieColumnID.Rang));
 						orig = new Table_Kategorie_Tab_Text(tabName, origText, childText, childTyp, childRang);
 						elem = new Table_Kategorie_Tab_Text(tabName, currText, childText, childTyp, childRang);
-						dbAdapter.updateEntry(orig, elem);
+						dbAdapter.UpdateEntry(orig, elem);
 					} while (currTreeStore.IterNext(ref child));
 				}
 				orig = new Table_Kategorie_Tab_Titel(tabName, origText, origTyp, currRang);
 				elem = new Table_Kategorie_Tab_Titel(tabName, currText, cbTyp.Active, currRang);
 
 			} else {
-				var titelName = (string)currTreeStore.GetValue(currParentIter, (int)TextColumnID.Text);
+				var titelName = (string)currTreeStore.GetValue(currParentIter, (int)CategorieColumnID.Text);
 				orig = new Table_Kategorie_Tab_Text(tabName, titelName, origText, origTyp, currRang);
 				elem = new Table_Kategorie_Tab_Text(tabName, titelName, currText, cbTyp.Active, currRang);
 			}
-			dbAdapter.updateEntry(orig, elem);
+			dbAdapter.UpdateEntry(orig, elem);
+
+			// Save on Ui
+			currTreeStore.SetValue(currTreeIter, (int)CategorieColumnID.Typ, cbTyp);
+			currTreeStore.SetValue(currTreeIter, (int)CategorieColumnID.Text, dbString);
 
 			// Save on this
 			this.origTyp = cbTyp.Active;
@@ -201,7 +201,7 @@ namespace Tabellarius.EditFrameTypes
 			if (!init)
 				return;
 
-			int rangID = (int)TextColumnID.Rang;
+			int rangID = (int)CategorieColumnID.Rang;
 			string pos = (string)currTreeStore.GetValue(currTreeIter, rangID);
 
 			TreeIter changeIter = currTreeIter;
@@ -223,28 +223,28 @@ namespace Tabellarius.EditFrameTypes
 				Table_Kategorie_Tab_Titel orig, newElem;
 
 				// Get values from ListView
-				var currTitel = (string)currTreeStore.GetValue(currParentIter, (int)TextColumnID.Text);
-				var currText = (string)currTreeStore.GetValue(currTreeIter, (int)TextColumnID.Text);
+				var currTitel = (string)currTreeStore.GetValue(currParentIter, (int)CategorieColumnID.Text);
+				var currText = (string)currTreeStore.GetValue(currTreeIter, (int)CategorieColumnID.Text);
 				int currTyp;
 				if (isParent)
-					currTyp = API_Contract.CategorieTextParentTypCR[(string)currTreeStore.GetValue(currTreeIter, (int)TextColumnID.Typ)];
+					currTyp = API_Contract.CategorieTextParentTypCR[(string)currTreeStore.GetValue(currTreeIter, (int)CategorieColumnID.Typ)];
 				else
-					currTyp = API_Contract.CategorieTextChildTypCR[(string)currTreeStore.GetValue(currTreeIter, (int)TextColumnID.Typ)];
+					currTyp = API_Contract.CategorieTextChildTypCR[(string)currTreeStore.GetValue(currTreeIter, (int)CategorieColumnID.Typ)];
 				orig = new Table_Kategorie_Tab_Titel(tabName, currTitel, currTyp, int.Parse(pos));
 				newElem = new Table_Kategorie_Tab_Titel(tabName, currTitel, currTyp, int.Parse(beforePos));
-				dbAdapter.updateEntry(orig, newElem);
+				dbAdapter.UpdateEntry(orig, newElem);
 
 				// Get only necessary values from ListView
-				currText = (string)currTreeStore.GetValue(changeIter, (int)TextColumnID.Text);
+				currText = (string)currTreeStore.GetValue(changeIter, (int)CategorieColumnID.Text);
 				if (isParent)
-					currTyp = API_Contract.CategorieTextParentTypCR[(string)currTreeStore.GetValue(currTreeIter, (int)TextColumnID.Typ)];
+					currTyp = API_Contract.CategorieTextParentTypCR[(string)currTreeStore.GetValue(currTreeIter, (int)CategorieColumnID.Typ)];
 				else
-					currTyp = API_Contract.CategorieTextChildTypCR[(string)currTreeStore.GetValue(currTreeIter, (int)TextColumnID.Typ)];
+					currTyp = API_Contract.CategorieTextChildTypCR[(string)currTreeStore.GetValue(currTreeIter, (int)CategorieColumnID.Typ)];
 				orig.Titel = newElem.Titel = currText;
 				orig.Typ = newElem.Typ = currTyp;
 				orig.Rang = int.Parse(beforePos);
 				newElem.Rang = int.Parse(pos);
-				dbAdapter.updateEntry(orig, newElem);
+				dbAdapter.UpdateEntry(orig, newElem);
 			}
 		}
 
@@ -259,11 +259,6 @@ namespace Tabellarius.EditFrameTypes
 			saveButton.Dispose();
 			cancelButton.Dispose();
 			base.Dispose();
-		}
-
-		public override void EditTreeRow(TreeView treeView, RowActivatedArgs args, int day)
-		{
-			throw new NotImplementedException();
 		}
 
 	}

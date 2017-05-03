@@ -65,34 +65,34 @@ namespace Tabellarius.EditFrameTypes
 			origText = "";
 		}
 
-		public override void EditTreeRow(TreeView treeView, RowActivatedArgs args, int day)
+		public override void EditTreeRow(TreeView treeView, RowActivatedArgs args, object tabData)
 		{
 			Init = true;
-			this.day = day;
+			this.day = (int)tabData;
 
-			this.currTreeStore = (TreeStore)treeView.Model;
 			TreeIter currIter;
-			currTreeStore.GetIter(out currIter, args.Path);
+			this.currTreeStore = (TreeStore)treeView.Model;
+			this.currTreeStore.GetIter(out currIter, args.Path);
 			this.currTreeIter = currIter;
 
 			string timeString;
-			string textString = (string)currTreeStore.GetValue(currIter, (int)ListColumnID.Text);
+			string textString = (string)currTreeStore.GetValue(currIter, (int)ProgrammColumnID.Text);
 
 			if (args.Path.Depth == 1) { // Parent Node
 				currParentIter = currIter;
-				timeString = (string)currTreeStore.GetValue(currIter, (int)ListColumnID.Uhrzeit);
+				timeString = (string)currTreeStore.GetValue(currIter, (int)ProgrammColumnID.Uhrzeit);
 			} else { // Child Node
 				TreeIter parentIter;
 				currTreeStore.IterParent(out parentIter, currIter);
 				currParentIter = parentIter;
 				// Get Parent to get the value for time
 				timeBox.IsEditable = false;
-				timeString = (string)currTreeStore.GetValue(parentIter, (int)ListColumnID.Uhrzeit); // Time is only saved in Parent Nodes
+				timeString = (string)currTreeStore.GetValue(parentIter, (int)ProgrammColumnID.Uhrzeit); // Time is only saved in Parent Nodes
 				textString = API_Contract.ConvertTreeViewToEditView(textString);
 			}
 
 			int val;
-			var typString = (string)currTreeStore.GetValue(currIter, (int)ListColumnID.Typ);
+			var typString = (string)currTreeStore.GetValue(currIter, (int)ProgrammColumnID.Typ);
 			if (API_Contract.ProgrammDescrTypCR.TryGetValue(typString, out val)) {
 				GtkHelper.FillComboBox(cbTyp, API_Contract.ProgrammDescrTypVal);
 				cbTyp.Active = val;
@@ -126,20 +126,20 @@ namespace Tabellarius.EditFrameTypes
 
 			bool isTermin = currTreeIter.Equals(currParentIter);
 
+			// Save on Database
 			DatabaseTable orig, newElem;
-			// TODO: Save on Database
-			var origTime = (string)currTreeStore.GetValue(currParentIter, (int)ListColumnID.Uhrzeit);
-			if (isTermin) {
-				// Save child Nodes
+			var origTime = (string)currTreeStore.GetValue(currParentIter, (int)ProgrammColumnID.Uhrzeit);
+			if (isTermin) { // Parent
+				// Adjust childs
 				TreeIter childIter;
 				if (currTreeStore.IterChildren(out childIter, currTreeIter)) {
 					do {
-						var childText = (string)currTreeStore.GetValue(childIter, (int)ListColumnID.Text);
-						var childTime = (string)currTreeStore.GetValue(childIter, (int)ListColumnID.Uhrzeit);
-						var childTyp = API_Contract.ProgrammDescrTypCR[(string)currTreeStore.GetValue(childIter, (int)ListColumnID.Typ)];
+						var childText = (string)currTreeStore.GetValue(childIter, (int)ProgrammColumnID.Text);
+						var childTime = (string)currTreeStore.GetValue(childIter, (int)ProgrammColumnID.Uhrzeit);
+						var childTyp = API_Contract.ProgrammDescrTypCR[(string)currTreeStore.GetValue(childIter, (int)ProgrammColumnID.Typ)];
 						orig = new Table_Beschreibung(day, childTime, childText, childTyp);
 						newElem = new Table_Beschreibung(day, validTime, childText, childTyp);
-						dbAdapter.updateEntry(orig, newElem);
+						dbAdapter.UpdateEntry(orig, newElem);
 					} while (currTreeStore.IterNext(ref childIter));
 				}
 				orig = new Table_Termin(day, origTime, origText, origTyp);
@@ -149,25 +149,25 @@ namespace Tabellarius.EditFrameTypes
 				orig = new Table_Beschreibung(day, origTime, origText, origTyp);
 				newElem = new Table_Beschreibung(day, origTime, databaseString, cbTyp.Active);
 			}
-			dbAdapter.updateEntry(orig, newElem);
+			dbAdapter.UpdateEntry(orig, newElem);
 
-			// Add on UI
+			// Save on UI
 			if (!isTermin)
 				databaseString = API_Contract.ConvertDatabaseToTreeChild(databaseString);
-			currTreeStore.SetValue(currTreeIter, (int)ListColumnID.Text, databaseString);
+			currTreeStore.SetValue(currTreeIter, (int)ProgrammColumnID.Text, databaseString);
 
 
 			if (isTermin) { // Only Parent Nodes can change Time
-				currTreeStore.SetValue(currTreeIter, (int)ListColumnID.Uhrzeit, validTime);
+				currTreeStore.SetValue(currTreeIter, (int)ProgrammColumnID.Uhrzeit, validTime);
 				// Set new value, sort it in and update UI valiue
-				var iter = GtkHelper.SortInByColumn(currTreeStore, (int)ListColumnID.Uhrzeit, currTreeIter);
+				var iter = GtkHelper.SortInByColumn(currTreeStore, (int)ProgrammColumnID.Uhrzeit, currTreeIter);
 				API_Contract.ClearTimeConflicts(currTreeStore, iter);
-				timeBox.Time = (string)currTreeStore.GetValue(currTreeIter, (int)ListColumnID.Uhrzeit);
+				timeBox.Time = (string)currTreeStore.GetValue(currTreeIter, (int)ProgrammColumnID.Uhrzeit);
 			} else {
-				GtkHelper.SortInByColumn(currTreeStore, (int)ListColumnID.Text, currTreeIter);
+				GtkHelper.SortInByColumn(currTreeStore, (int)ProgrammColumnID.Text, currTreeIter);
 			}
 
-			// Add on this
+			// Save on this
 			timeBox.Time = validTime;
 			origText = textEntry.Buffer.Text;
 			origTyp = cbTyp.Active;
@@ -207,9 +207,5 @@ namespace Tabellarius.EditFrameTypes
 			base.Dispose();
 		}
 
-		public override void EditTreeRow(TreeView treeView, RowActivatedArgs args, string tabName)
-		{
-			throw new NotImplementedException();
-		}
 	}
 }

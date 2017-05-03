@@ -5,17 +5,13 @@ using System.Collections.Generic;
 using Tabellarius.Database;
 using Tabellarius.Assets;
 
-namespace Tabellarius.ListFramesTypes
+namespace Tabellarius.ListFrameTypes
 {
 	public class ProgrammListView : AbstractListView
 	{
 
 		private DatabaseAdapter dbAdapter;
 		private EditFrameAdapter editFrameAdapter;
-
-		private uint days = 0;
-		private Notebook tabView;
-		private List<TreeView> treeList;
 
 
 		public ProgrammListView() : base()
@@ -35,13 +31,14 @@ namespace Tabellarius.ListFramesTypes
 
 		private void PopulateTabView()
 		{
+			tabs = 0;
 			// Adding a Tab with (scrollable) TreeStore for every day
-			TreeStore dayQuery = dbAdapter.GetListFrameContentFor(days);
+			TreeStore dayQuery = dbAdapter.GetListFrameContentFor(tabs);
 			while (dayQuery != null) {
 				var tabContent = GenScrollableTree(dayQuery);
-				days++; // UI days start with 1
-				tabView.AppendPage(tabContent, new Label("Tag " + days));
-				dayQuery = dbAdapter.GetListFrameContentFor(days);
+				tabs++; // UI days start with 1
+				tabView.AppendPage(tabContent, new Label("Tag " + tabs));
+				dayQuery = dbAdapter.GetListFrameContentFor(tabs);
 			}
 		}
 
@@ -50,8 +47,8 @@ namespace Tabellarius.ListFramesTypes
 			// AddDay() does not get saved in the database - just UI
 			var emptyStore = new TreeStore(typeof(string), typeof(string));
 			var tabContent = GenScrollableTree(emptyStore);
-			days++;
-			tabView.AppendPage(tabContent, new Label("Tag " + days));
+			tabs++;
+			tabView.AppendPage(tabContent, new Label("Tag " + tabs));
 			ShowAll();
 		}
 
@@ -98,7 +95,7 @@ namespace Tabellarius.ListFramesTypes
 					TreeIter insertIter, firstIter;
 					insertIter = treeContent.AppendValues(timeBox.DatabaseTime, textEntry.Text);
 					treeContent.GetIterFirst(out firstIter);
-					GtkHelper.SortInByColumn(treeContent, (int)ListColumnID.Uhrzeit, insertIter);
+					GtkHelper.SortInByColumn(treeContent, (int)ProgrammColumnID.Uhrzeit, insertIter);
 
 					// TODO: Save on Database
 				}
@@ -132,7 +129,7 @@ namespace Tabellarius.ListFramesTypes
 				TreeIter insertIter, firstIter;
 				insertIter = treeContent.AppendValues(parentIter, "└──", "\t" + userText.Text);
 				treeContent.IterNthChild(out firstIter, parentIter, 0);
-				GtkHelper.SortInByColumn(treeContent, (int)ListColumnID.Text, insertIter);
+				GtkHelper.SortInByColumn(treeContent, (int)ProgrammColumnID.Text, insertIter);
 
 				// TODO: Save on Database
 			}
@@ -148,10 +145,10 @@ namespace Tabellarius.ListFramesTypes
 			scrollWin.ShadowType = ShadowType.EtchedOut;
 			scrollWin.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
 
-			var timeColumn = new TreeViewColumn(" Uhrzeit ", GenRenderCell(), "text", ListColumnID.Uhrzeit);
-			var textColumn = new TreeViewColumn("Text", GenRenderCell(), "text", ListColumnID.Text);
+			var timeColumn = new TreeViewColumn(" Uhrzeit ", GenRenderCell(), "text", ProgrammColumnID.Uhrzeit);
+			var textColumn = new TreeViewColumn("Text", GenRenderCell(), "text", ProgrammColumnID.Text);
 			textColumn.Resizable = true;
-			var typColumn = new TreeViewColumn(" Typ ", GenRenderCell(), "text", ListColumnID.Typ);
+			var typColumn = new TreeViewColumn(" Typ ", GenRenderCell(), "text", ProgrammColumnID.Typ);
 
 			var tree = new TreeView();
 			tree.AppendColumn(timeColumn);
@@ -176,9 +173,9 @@ namespace Tabellarius.ListFramesTypes
 		public override void DataSetChanged()
 		{
 			// Clear everything out
-			for (uint i = 0; i < days; i++)
+			for (uint i = 0; i < tabs; i++)
 				tabView.RemovePage(0);
-			days = 0;
+			tabs = 0;
 
 			foreach (TreeView tree in treeList) {
 				tree.Destroy();
