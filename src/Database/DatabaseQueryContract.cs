@@ -23,4 +23,17 @@ namespace Tabellarius.Database
 		public int TextRang { set; get; }
 		public int TextTyp { set; get; }
 	}
+
+	public class EventQuery
+	{
+		public int VeranstaltungID { set; get; }
+		public string VeranstaltungsKürzel { set; get; }
+		public string VeranstaltungName { set; get; }
+		public string VeranstaltungSprache { set; get; }
+		public int VeranstaltungJahr { set; get; }
+		public int VeranstaltungDauer { set; get; }
+		public int InstanzID { set; get; }
+		public string InstanzStartDatum { set; get; }
+	}
+
 }

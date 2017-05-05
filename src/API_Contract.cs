@@ -34,18 +34,29 @@ namespace Tabellarius
 	};
 
 
-	public enum ListColumnID
+	public enum ProgrammColumnID
 	{
 		Uhrzeit, Text, Typ,
 	}
 
-	public enum TextColumnID
+	public enum CategorieColumnID
 	{
 		Rang, Typ, Text,
 	}
 
+	public enum EventColumnId
+	{
+		ID, Name, Krzl, Sprache, Zeit,
+	}
+
 	public class API_Contract
 	{
+
+		public static readonly string[] SupportedLanguages =
+		{
+			"de",
+			"en"
+		};
 
 		public static readonly string[] ProgrammTerminTypVal =
 		{
@@ -159,11 +170,11 @@ namespace Tabellarius
 		{
 
 			// Get first Iter with equal time
-			var checkVal = (string)treeContent.GetValue(toCheck, (int)ListColumnID.Uhrzeit);
+			var checkVal = (string)treeContent.GetValue(toCheck, (int)ProgrammColumnID.Uhrzeit);
 			Gtk.TreeIter before = toCheck;
 			Gtk.TreeIter drag = toCheck;
 			while (treeContent.IterPrevious(ref before)) {
-				string refVal = (string)treeContent.GetValue(before, (int)ListColumnID.Uhrzeit);
+				string refVal = (string)treeContent.GetValue(before, (int)ProgrammColumnID.Uhrzeit);
 				if (refVal.StartsWith(checkVal.Substring(0, 5)))
 					drag = before;
 				else
@@ -173,10 +184,10 @@ namespace Tabellarius
 			bool hasNext = true;
 			for (int i = 0; hasNext; i++) {
 				SetRang(treeContent, drag, i);
-				GtkHelper.SortInByColumn(treeContent, (int)ListColumnID.Uhrzeit, drag);
+				GtkHelper.SortInByColumn(treeContent, (int)ProgrammColumnID.Uhrzeit, drag);
 				hasNext = treeContent.IterNext(ref drag);
 				if (hasNext) {
-					string refVal = (string)treeContent.GetValue(drag, (int)ListColumnID.Uhrzeit);
+					string refVal = (string)treeContent.GetValue(drag, (int)ProgrammColumnID.Uhrzeit);
 					if (!refVal.StartsWith(checkVal.Substring(0, 5)))
 						break;
 				}
@@ -185,8 +196,8 @@ namespace Tabellarius
 
 		private static void SetRang(Gtk.TreeStore store, Gtk.TreeIter iter, int rang)
 		{
-			var val = (string)store.GetValue(iter, (int)ListColumnID.Uhrzeit);
-			store.SetValue(iter, (int)ListColumnID.Uhrzeit, val.Substring(0, 5) + ":" + rang);
+			var val = (string)store.GetValue(iter, (int)ProgrammColumnID.Uhrzeit);
+			store.SetValue(iter, (int)ProgrammColumnID.Uhrzeit, val.Substring(0, 5) + ":" + rang);
 		}
 
 		public static Gtk.TextTag boldTag, italicTag;

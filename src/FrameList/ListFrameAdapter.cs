@@ -1,5 +1,5 @@
 using Gtk;
-using Tabellarius.ListFramesTypes;
+using Tabellarius.ListFrameTypes;
 
 namespace Tabellarius
 {
@@ -55,8 +55,10 @@ namespace Tabellarius
 
 			if (mode == MiddleToolBar.DisplayMode.Programm)
 				currView = new ProgrammListView();
-			else
+			else if (mode == MiddleToolBar.DisplayMode.Kategorie)
 				currView = new CategorieListView();
+			else
+				currView = new EventListView();
 
 			Add(currView);
 			currView.ShowAll();

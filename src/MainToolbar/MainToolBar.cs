@@ -9,8 +9,7 @@ namespace Tabellarius
 
 		private static MainToolBar instance;
 
-		private TextToolbar textToolbar;
-
+		private TextToolbar textToolbar = null;
 
 		private MainToolBar() : base()
 		{
@@ -47,22 +46,19 @@ namespace Tabellarius
 
 		public void ChangeMode(MiddleToolBar.DisplayMode mode)
 		{
-			if (mode == MiddleToolBar.DisplayMode.Programm && textToolbar != null) {
+			if (textToolbar != null) {
 				this.Remove(textToolbar);
 				textToolbar.Destroy();
 				textToolbar.Dispose();
 				textToolbar = null;
-			} else if (textToolbar == null) {
+			}
+
+			if (mode == MiddleToolBar.DisplayMode.Kategorie) {
 				textToolbar = new TextToolbar();
 				this.PackStart(textToolbar, false, false, 0);
 				textToolbar.ShowAll();
 			}
-		}
-
-		public void ToolbarSync()
-		{
-			if (textToolbar != null)
-				textToolbar.UpdateValues();
+			Console.WriteLine("MainToolBar ChangeMode");
 		}
 
 	}

@@ -101,7 +101,7 @@ namespace Tabellarius
 				instance.Init(name);
 		}
 
-		public Gtk.TreeStore GetListFrameContentFor(uint day)
+		public Gtk.TreeStore GetListFrameContentFor(int day)
 		{
 			if (!init)
 				throw new Exception("DatabaseAdapter is already closed");
@@ -147,21 +147,21 @@ namespace Tabellarius
 			return dbReader.GetTextContentFor(curr_veranstaltungsId, curr_categorie, tabIndex);
 		}
 
-		public void insertEntry(DatabaseTable elem)
+		public void InsertEntry(DatabaseTable elem)
 		{
 			if (!init)
 				throw new Exception("DatabaseAdapter is already closed");
 			dbWriter.DbInsert(elem);
 		}
 
-		public void updateEntry(DatabaseTable oldElem, DatabaseTable newElem)
+		public void UpdateEntry(DatabaseTable oldElem, DatabaseTable newElem)
 		{
 			if (!init)
 				throw new Exception("DatabaseAdapter is already closed");
 			dbWriter.DbUpdate(oldElem, newElem);
 		}
 
-		public void deleteEntry(DatabaseTable elem)
+		public void DeleteEntry(DatabaseTable elem)
 		{
 			if (!init || !activeVeranstaltung)
 				throw new Exception("DatabaseAdapter is already closed");
@@ -196,6 +196,12 @@ namespace Tabellarius
 				}
 				i++;
 			}
+		}
+
+		public Gtk.TreeStore GetEventContent() {
+			if (!init)
+				throw new Exception("DatabaseAdapter is already closed");
+			return dbReader.GetEventContent();
 		}
 
 		public void NoActiveCategorie()

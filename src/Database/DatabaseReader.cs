@@ -81,7 +81,7 @@ namespace Tabellarius.Database
 				cached_ProgrammQuery[i++] = dayList.ToArray();
 		}
 
-		public TreeStore GetListFrameDataFor(uint day, int veranstaltungs_id, int instanz_id, string sprache)
+		public TreeStore GetListFrameDataFor(int day, int veranstaltungs_id, int instanz_id, string sprache)
 		{   // Populates a treeStore with the data from @programm[day]
 			// Check if data is already cached
 			if (cached_ProgrammQuery == null
@@ -161,7 +161,7 @@ namespace Tabellarius.Database
 				LEFT JOIN Kategorie_Tab_Text
 					ON Kategorie_Tab_Text.Name_Kategorie == Kategorie.Titel
 					AND Kategorie_Tab_Text.TabName_Kategorie_Tab  == Kategorie_Tab.TabName
-					AND Kategorie_Tab_Text.Title_Kategorie_Tab_Titel == Kategorie_Tab_Titel.Titel
+					AND Kategorie_Tab_Text.Titel_Kategorie_Tab_Titel == Kategorie_Tab_Titel.Titel
 
 				WHERE Kategorie.Id_Veranstaltung == ?
 				AND Kategorie.Titel ==  ?
@@ -214,6 +214,7 @@ namespace Tabellarius.Database
 
 			CategorieQuery[][] titleList = cached_CategorieQuery[tabIndex];
 
+			// Rang, Text, Typ
 			TreeStore treeStore = new Gtk.TreeStore(typeof(string), typeof(string), typeof(string));
 			TreeIter currIter = TreeIter.Zero;
 
@@ -222,7 +223,7 @@ namespace Tabellarius.Database
 					continue;
 
 				CategorieQuery currElem = titles[0];
-				currIter = treeStore.AppendValues(currElem.TitelRang + "",
+				currIter = treeStore.AppendValues(currElem.TitelRang,
 								API_Contract.CategorieTextParentTypHR[currElem.TitelTyp]
 								, currElem.Titel);
 				try {
@@ -230,7 +231,7 @@ namespace Tabellarius.Database
 					if (currElem.Text != null) {
 						foreach (var text in titles) {
 							treeStore.AppendValues(currIter,
-								text.TextRang + "",
+								text.TextRang,
 								API_Contract.CategorieTextChildTypHR[currElem.TextTyp],
 								text.Text);
 						}
@@ -254,6 +255,52 @@ namespace Tabellarius.Database
 			return db.Table<Table_Kategorie_Tab>()
 					.Where(v => v.Id_Veranstaltung == veranstaltungs_id && v.Name_Kategorie.Equals(categorie))
 					.OrderBy(v => v.Rang);
+		}
+
+		public TreeStore GetEventContent()
+		{
+			// Id, VeranstaltungName, VeranstaltungsKürzel, VeranstaltungSprache, VeranstaltungZeit
+			TreeStore treeStore = new TreeStore(typeof(int), typeof(string), typeof(string), typeof(string), typeof(string));
+			EventQuery[] query = db.Query<EventQuery>(@"
+			SELECT
+				Veranstaltung.Id  AS VeranstaltungID,
+				Veranstaltung.Kürzel AS VeranstaltungsKürzel,
+				Veranstaltung.Name AS VeranstaltungName,
+				Veranstaltung.Sprache AS VeranstaltungSprache,
+				Veranstaltung.Jahr AS VeranstaltungJahr,
+				Veranstaltung.Dauer AS VeranstaltungDauer,
+				Instanz.Id AS InstanzID,
+				Instanz.StartDatum AS InstanzStartDatum
+
+			FROM Veranstaltung
+			JOIN Instanz
+				ON Instanz.Id_Veranstaltung == Veranstaltung.Id
+
+			ORDER BY VeranstaltungJahr, VeranstaltungID, InstanzID").ToArray();
+
+			int i = 0;
+			while (i < query.Length) {
+				var curr = query[i];
+				int parentId = query[i].VeranstaltungID;
+				var parentLang = curr.VeranstaltungSprache;
+				var currIter = treeStore.AppendValues(curr.VeranstaltungID,
+													curr.VeranstaltungName,
+													curr.VeranstaltungsKürzel,
+													parentLang,
+													"" + curr.VeranstaltungJahr);
+				do { // Childs (Instanzen)
+					treeStore.AppendValues(currIter, curr.InstanzID,
+											"",
+											"",
+											"",
+											curr.InstanzStartDatum);
+					i++;
+					if (i < query.Length)
+						curr = query[i];
+				} while (i < query.Length && curr.VeranstaltungID == parentId);
+			}
+
+			return treeStore;
 		}
 
 		public void Close()
