@@ -24,20 +24,14 @@ namespace Tabellarius
 			return instance;
 		}
 
-		public void PassToEditView(TreeView treeView, RowActivatedArgs args, int day)
+		public void PassToEditView(TreeView treeView, RowActivatedArgs args, object detail)
 		{
-			if (!currView.SaveWithDialog())
-				return;
-
-			currView.EditTreeRow(treeView, args, day);
-		}
-
-		public void PassToEditView(TreeView treeView, RowActivatedArgs args, string tabName)
-		{
-			if (!currView.SaveWithDialog())
-				return;
-
-			currView.EditTreeRow(treeView, args, tabName);
+			if (currView.SaveWithDialog()) {
+				currView.EditTreeRow(treeView, args, detail);
+			} else {
+				// Switch selection back
+				treeView.Selection.SelectIter(currView.currTreeIter);
+			}
 		}
 
 		public TreeIter GetActiveParentTreeIter()
@@ -56,8 +50,10 @@ namespace Tabellarius
 
 			if (mode == MiddleToolBar.DisplayMode.Programm)
 				currView = new ProgrammEditView();
-			else
+			else if (mode == MiddleToolBar.DisplayMode.Kategorie)
 				currView = new CategoryEditView();
+			else
+				currView = new EventEditView();
 
 			Add(currView);
 			currView.ShowAll();

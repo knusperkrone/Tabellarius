@@ -8,26 +8,11 @@ namespace Tabellarius.ListFrameTypes
 	public class CategorieListView : AbstractListView
 	{
 
-		private DatabaseAdapter dbAdapter;
-		private EditFrameAdapter editFrameAdapter;
 		private string[] tabNames;
 
-		public CategorieListView()
-		{
-			this.SetPolicy(PolicyType.Automatic, PolicyType.Never);
+		public CategorieListView() : base() { }
 
-			dbAdapter = DatabaseAdapter.GetInstance();
-			editFrameAdapter = EditFrameAdapter.GetInstance();
-
-			tabView = new Notebook();
-			treeList = new List<TreeView>();
-
-			PopulateTabView();
-
-			AddWithViewport(tabView);
-		}
-
-		private void PopulateTabView()
+		protected override void PopulateTabView()
 		{
 			tabNames = dbAdapter.GetCategorieTabNames();
 			this.tabs = tabNames.Length;
@@ -149,22 +134,6 @@ namespace Tabellarius.ListFrameTypes
 			// Repopulate
 			PopulateTabView();
 			tabView.ShowAll();
-		}
-
-		public override void Dispose()
-		{
-			foreach (TreeView tree in treeList)
-				tree.Dispose();
-			tabView.Dispose();
-			base.Dispose();
-		}
-
-		private static CellRendererText GenTextCell()
-		{
-			var cell = new CellRendererText();
-			cell.Editable = false;
-			cell.SetPadding(5, 8);
-			return cell;
 		}
 
 	}

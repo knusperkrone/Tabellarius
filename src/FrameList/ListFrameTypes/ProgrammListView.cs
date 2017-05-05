@@ -10,26 +10,9 @@ namespace Tabellarius.ListFrameTypes
 	public class ProgrammListView : AbstractListView
 	{
 
-		private DatabaseAdapter dbAdapter;
-		private EditFrameAdapter editFrameAdapter;
+		public ProgrammListView() : base() { }
 
-
-		public ProgrammListView() : base()
-		{
-			this.SetPolicy(PolicyType.Never, PolicyType.Never);
-
-			dbAdapter = DatabaseAdapter.GetInstance();
-			editFrameAdapter = EditFrameAdapter.GetInstance();
-
-			tabView = new Notebook();
-			treeList = new List<TreeView>();
-
-			PopulateTabView();
-
-			AddWithViewport(tabView);
-		}
-
-		private void PopulateTabView()
+		protected override void PopulateTabView()
 		{
 			tabs = 0;
 			// Adding a Tab with (scrollable) TreeStore for every day
@@ -93,7 +76,7 @@ namespace Tabellarius.ListFrameTypes
 				if (validated) {
 					// Insert input into UI
 					TreeIter insertIter, firstIter;
-					insertIter = treeContent.AppendValues(timeBox.DatabaseTime, textEntry.Text);
+					insertIter = treeContent.AppendValues(timeBox.Time, textEntry.Text);
 					treeContent.GetIterFirst(out firstIter);
 					GtkHelper.SortInByColumn(treeContent, (int)ProgrammColumnID.Uhrzeit, insertIter);
 
@@ -145,10 +128,10 @@ namespace Tabellarius.ListFrameTypes
 			scrollWin.ShadowType = ShadowType.EtchedOut;
 			scrollWin.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
 
-			var timeColumn = new TreeViewColumn(" Uhrzeit ", GenRenderCell(), "text", ProgrammColumnID.Uhrzeit);
-			var textColumn = new TreeViewColumn("Text", GenRenderCell(), "text", ProgrammColumnID.Text);
+			var timeColumn = new TreeViewColumn(" Uhrzeit ", GenTextCell(), "text", ProgrammColumnID.Uhrzeit);
+			var textColumn = new TreeViewColumn("Text", GenTextCell(), "text", ProgrammColumnID.Text);
 			textColumn.Resizable = true;
-			var typColumn = new TreeViewColumn(" Typ ", GenRenderCell(), "text", ProgrammColumnID.Typ);
+			var typColumn = new TreeViewColumn(" Typ ", GenTextCell(), "text", ProgrammColumnID.Typ);
 
 			var tree = new TreeView();
 			tree.AppendColumn(timeColumn);
@@ -186,25 +169,6 @@ namespace Tabellarius.ListFrameTypes
 			// Repopulate
 			PopulateTabView();
 			ShowAll();
-		}
-
-		public override void Dispose()
-		{
-			foreach (TreeView tree in treeList) {
-				tree.Destroy();
-				tree.Dispose();
-			}
-			tabView.Destroy();
-			tabView.Dispose();
-			base.Dispose();
-		}
-
-		private static CellRendererText GenRenderCell()
-		{
-			var cell = new CellRendererText();
-			cell.Editable = false;
-			cell.SetPadding(5, 8);
-			return cell;
 		}
 
 	}

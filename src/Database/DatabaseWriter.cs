@@ -41,6 +41,7 @@ namespace Tabellarius.Database
 												" SET " + newElem.SETString() +
 												" WHERE " + oldElem.UPDATEString());
 			System.Console.WriteLine(cmd.CommandText);
+			System.Console.WriteLine();
 			try {
 				cmd.ExecuteNonQuery();
 			} catch (SQLiteException e) {

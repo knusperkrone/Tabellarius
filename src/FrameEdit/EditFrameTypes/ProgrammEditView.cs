@@ -7,22 +7,18 @@ namespace Tabellarius.EditFrameTypes
 {
 	public class ProgrammEditView : AbstractEditView
 	{
-		//public override TreeIter currParentIter { get; private set; }
-		private TreeStore currTreeStore { get; set; }
 
 		private TimeBox timeBox;
 		private readonly ScrolledWindow scrollText;
 		private readonly TextView textEntry;
 		private readonly Label typLabel;
 		private readonly ComboBox cbTyp;
-		private readonly Button saveButton, cancelButton;
 
 		private int origTyp;
 		private string origText;
 		private int day;
 
-		private bool init;
-		private bool Init
+		protected override bool Init
 		{
 			get { return this.init; }
 			set { this.init = textEntry.Editable = timeBox.IsEditable = value; }
@@ -34,7 +30,7 @@ namespace Tabellarius.EditFrameTypes
 			// Init User Layout
 			timeBox = new TimeBox(true);
 
-			typLabel = new Label(" Typ");
+			typLabel = new Label("   Typ");
 			cbTyp = new ComboBox(new string[] { "     " });
 
 			var typBox = new HBox();
@@ -48,18 +44,9 @@ namespace Tabellarius.EditFrameTypes
 			scrollText.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
 			scrollText.Add(textEntry);
 
-			saveButton = new Button("Speichern");
-			cancelButton = new Button("Zurücksetzen");
-			saveButton.Clicked += delegate { OnSave(); };
-			cancelButton.Clicked += OnCancel;
-			var buttonBox = new HBox();
-			buttonBox.PackStart(saveButton, false, true, 5);
-			buttonBox.PackStart(cancelButton, false, true, 2);
-
 			this.PackStart(timeBox, false, true, 5);
 			this.PackStart(typBox, false, true, 5);
 			this.PackStart(scrollText, true, true, 5);
-			this.PackStart(buttonBox, false, true, 5);
 
 			Init = false;
 			origText = "";
@@ -78,7 +65,7 @@ namespace Tabellarius.EditFrameTypes
 			string timeString;
 			string textString = (string)currTreeStore.GetValue(currIter, (int)ProgrammColumnID.Text);
 
-			if (args.Path.Depth == 1) { // Parent Node
+			if (IsParent(args)) { // Parent Node
 				currParentIter = currIter;
 				timeString = (string)currTreeStore.GetValue(currIter, (int)ProgrammColumnID.Uhrzeit);
 			} else { // Child Node
@@ -121,15 +108,13 @@ namespace Tabellarius.EditFrameTypes
 			if (!timeBox.ValidateTime()) // Time is not valid
 				return false;
 
-			string validTime = timeBox.DatabaseTime;
+			string validTime = timeBox.Time;
 			string databaseString = API_Contract.ConvertEditViewToDatabase(textEntry.Buffer.Text);
-
-			bool isTermin = currTreeIter.Equals(currParentIter);
 
 			// Save on Database
 			DatabaseTable orig, newElem;
 			var origTime = (string)currTreeStore.GetValue(currParentIter, (int)ProgrammColumnID.Uhrzeit);
-			if (isTermin) { // Parent
+			if (IsCurrParent) { // Parent
 				// Adjust childs
 				TreeIter childIter;
 				if (currTreeStore.IterChildren(out childIter, currTreeIter)) {
@@ -152,12 +137,12 @@ namespace Tabellarius.EditFrameTypes
 			dbAdapter.UpdateEntry(orig, newElem);
 
 			// Save on UI
-			if (!isTermin)
+			if (!IsCurrParent)
 				databaseString = API_Contract.ConvertDatabaseToTreeChild(databaseString);
 			currTreeStore.SetValue(currTreeIter, (int)ProgrammColumnID.Text, databaseString);
 
 
-			if (isTermin) { // Only Parent Nodes can change Time
+			if (IsCurrParent) { // Only Parent Nodes can change Time
 				currTreeStore.SetValue(currTreeIter, (int)ProgrammColumnID.Uhrzeit, validTime);
 				// Set new value, sort it in and update UI valiue
 				var iter = GtkHelper.SortInByColumn(currTreeStore, (int)ProgrammColumnID.Uhrzeit, currTreeIter);
@@ -202,8 +187,6 @@ namespace Tabellarius.EditFrameTypes
 			cbTyp.Dispose();
 			textEntry.Dispose();
 			scrollText.Dispose();
-			saveButton.Dispose();
-			cancelButton.Dispose();
 			base.Dispose();
 		}
 

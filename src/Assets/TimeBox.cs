@@ -9,7 +9,7 @@ namespace Tabellarius.Assets
 		private Gdk.RGBA invalidColor;
 		private Gdk.RGBA validColor;
 
-		public readonly Label hourLabel, minLabel, posLabel;
+		private readonly Label hourLabel, minLabel, posLabel;
 		public readonly Entry hourEntry, minEntry, posEntry;
 
 		private string origHour, origMin, origPos;
@@ -98,14 +98,13 @@ namespace Tabellarius.Assets
 				posLabel.OverrideColor(StateFlags.Normal, validColor);
 
 				string[] data = value.Split(':');
-
-				origHour = data[0];
-				origMin = data[1];
-				origPos = data[2];
-
-				hourEntry.Text = data[0];
-				minEntry.Text = data[1];
-				posEntry.Text = data[2];
+				origHour = hourEntry.Text = data[0];
+				origMin = minEntry.Text = data[1];
+				origPos = posEntry.Text = data[2];
+			}
+			get
+			{
+				return hourEntry.Text + ":" + minEntry.Text + ":" + posEntry.Text;
 			}
 		}
 
@@ -116,15 +115,6 @@ namespace Tabellarius.Assets
 				hourEntry.IsEditable = value;
 				minEntry.IsEditable = value;
 				posEntry.IsEditable = value;
-			}
-		}
-
-
-		public string DatabaseTime
-		{
-			get
-			{
-				return hourEntry.Text + ":" + minEntry.Text + ":" + posEntry.Text;
 			}
 		}
 
