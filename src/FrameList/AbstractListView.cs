@@ -31,7 +31,20 @@ namespace Tabellarius.ListFrameTypes
 		public abstract void AddTab();
 		public abstract void AddParentEntry();
 		public abstract void AddChildEntry();
-		public abstract void DataSetChanged();
+		public void DataSetChanged() {
+			for (uint i = 0; i < tabs; i++) {
+				tabView.RemovePage(0);
+			}
+			tabs = 0;
+
+			foreach (Gtk.TreeView tree in treeList)
+				tree.Dispose();
+			treeList.Clear();
+
+			// Repopulate
+			PopulateTabView();
+			tabView.ShowAll();
+		}
 		protected abstract Gtk.ScrolledWindow GenScrollableTree(Gtk.TreeStore treeContent);
 		public new void Dispose() {
 			foreach (var tree in treeList)

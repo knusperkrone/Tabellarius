@@ -28,6 +28,7 @@ namespace Tabellarius.EditFrameTypes
 
 		public CategoryEditView() : base()
 		{
+			// Init UI
 			upButton = new Button("↑");
 			downButton = new Button("↓");
 			upButton.Clicked += MoveRow;
@@ -54,7 +55,7 @@ namespace Tabellarius.EditFrameTypes
 
 			textEntry = new TagTextView(boldButton, italicButton);
 			var font = new Pango.FontDescription() { Family = "Droid Sans" };
-			textEntry.ModifyFont(font);
+			textEntry.OverrideFont(font);
 			textEntry.Buffer.TagTable.Add(API_Contract.boldTag);
 			textEntry.Buffer.TagTable.Add(API_Contract.italicTag);
 			textEntry.BorderWidth = 4; // Add some Padding
@@ -73,29 +74,25 @@ namespace Tabellarius.EditFrameTypes
 			tabName = origText = "";
 		}
 
-		public override void EditTreeRow(TreeView treeView, RowActivatedArgs args, object tabData)
+		protected override void EditTreeRow(TreeView treeView, RowActivatedArgs args, object tabData)
 		{
-			Init = true;
 			this.tabName = (string)tabData;
 
-			TreeIter currIter;
-			this.currTreeStore = (TreeStore)treeView.Model;
-			this.currTreeStore.GetIter(out currIter, args.Path);
-			this.currTreeIter = currIter;
-
-			string typString = (string)currTreeStore.GetValue(currIter, (int)CategorieColumnID.Typ);
-			string textString = (string)currTreeStore.GetValue(currIter, (int)CategorieColumnID.Text);
+			string typString = (string)currTreeStore.GetValue(currTreeIter, (int)CategorieColumnID.Typ);
+			string textString = (string)currTreeStore.GetValue(currTreeIter, (int)CategorieColumnID.Text);
 			int activeTyp;
 
 			// Get ParentIter and Type
-			if (IsParent(args)) { // Parent Node
-				currParentIter = currIter;
+			if (IsParent(args)) {
+				// Parent Node, just get values
+				currParentIter = currTreeIter;
 
 				GtkHelper.FillComboBox(cbTyp, API_Contract.CategorieTextTypParentVal);
 				activeTyp = API_Contract.CategorieTextParentTypCR[typString];
-			} else { // Child Node
+			} else {
+				// Child Node, get parent and values
 				TreeIter parentIter;
-				currTreeStore.IterParent(out parentIter, currIter);
+				currTreeStore.IterParent(out parentIter, currTreeIter);
 				currParentIter = parentIter;
 
 				GtkHelper.FillComboBox(cbTyp, API_Contract.CategorieTextTypChildVal);
@@ -129,10 +126,11 @@ namespace Tabellarius.EditFrameTypes
 
 		protected override bool OnSave()
 		{
+			// Mutable values
 			string typ = GtkHelper.ComboBoxActiveString(cbTyp);
 			string dbString = API_Contract.ConvertEditCategorieToDatabse(textEntry.Buffer);
 
-			// Save on Database
+			// Save on Database and UI
 			string currText = API_Contract.ConvertEditCategorieToDatabse(textEntry.Buffer);
 			int currRang = int.Parse((string)currTreeStore.GetValue(currTreeIter, (int)CategorieColumnID.Rang));
 			if (IsCurrParent) { // Parent
@@ -147,64 +145,6 @@ namespace Tabellarius.EditFrameTypes
 			this.origText = dbString;
 
 			return true;
-		}
-
-		private bool IsDirty()
-		{
-			return origTyp != cbTyp.Active
-					|| !origText.Equals(API_Contract.ConvertEditCategorieToDatabse(textEntry.Buffer));
-		}
-
-		public override void Clear()
-		{
-			Init = false;
-			boldButton.Active = italicButton.Active = false;
-			origTyp = cbTyp.Active = -1;
-			textEntry.Clear();
-			textEntry.Buffer.Clear();
-			origText = "";
-		}
-
-		private void MoveRow(object sender, EventArgs args)
-		{   // Moves a Row in the ListView and saves new position
-			if (!init)
-				return;
-
-			int currPos = int.Parse((string)currTreeStore.GetValue(currTreeIter, (int)CategorieColumnID.Rang));
-
-			TreeIter changeIter = currTreeIter;
-			bool canChange;
-			if (sender == upButton) // Go up or down
-				canChange = currTreeStore.IterPrevious(ref changeIter);
-			else // sender == downButton
-				canChange = currTreeStore.IterNext(ref changeIter);
-
-			if (canChange) {
-				var changePos = int.Parse((string)currTreeStore.GetValue(changeIter, (int)CategorieColumnID.Rang));
-				var changeText = (string)currTreeStore.GetValue(changeIter, (int)CategorieColumnID.Text);
-				int changeTyp;
-
-				if (IsCurrParent) {
-					changeTyp = API_Contract.CategorieTextParentTypCR[
-							(string)currTreeStore.GetValue(changeIter, (int)CategorieColumnID.Typ)];
-					SaveParentEntry(currTreeIter, false, origText, origTyp, int.MaxValue); // tmp
-					SaveParentEntry(changeIter, false, changeText, changeTyp, currPos);
-					SaveParentEntry(currTreeIter, false, origText, origTyp, changePos);
-				} else {
-					changeTyp = API_Contract.CategorieTextChildTypCR[
-							(string)currTreeStore.GetValue(changeIter, (int)CategorieColumnID.Typ)];
-					string tmpTitel = (string)currTreeStore.GetValue(currParentIter, (int)CategorieColumnID.Text);
-					SaveChildEntry(currTreeIter, currParentIter, tmpTitel, origText, origTyp, int.MaxValue); //tmp
-					SaveChildEntry(changeIter, currParentIter, tmpTitel, changeText, changeTyp, currPos);
-					SaveChildEntry(currTreeIter, currParentIter, tmpTitel, origText, origTyp, changePos);
-				}
-
-				if (sender == upButton)
-					GtkHelper.SortInByColumn(currTreeStore, (int)CategorieColumnID.Rang, changeIter);
-				else
-					GtkHelper.SortInByColumn(currTreeStore, (int)CategorieColumnID.Rang, currTreeIter);
-
-			}
 		}
 
 		private void SaveParentEntry(TreeIter iter, bool childs, string elemText, int elemTyp, int elemRang)
@@ -227,7 +167,6 @@ namespace Tabellarius.EditFrameTypes
 
 		private void SaveChildEntrysFor(TreeIter parent, string titel)
 		{
-			Console.WriteLine("\nTitel " + titel + '\n');
 			TreeIter child;
 			bool hasNext = currTreeStore.IterChildren(out child, parent);
 			while (hasNext) {
@@ -254,6 +193,66 @@ namespace Tabellarius.EditFrameTypes
 			currTreeStore.SetValue(iter, (int)CategorieColumnID.Rang, elemRang);
 			currTreeStore.SetValue(iter, (int)CategorieColumnID.Typ, elemListTyp);
 			currTreeStore.SetValue(iter, (int)CategorieColumnID.Text, elemText);
+		}
+
+		private void MoveRow(object sender, EventArgs args)
+		{
+			// Moves a Row in the ListView and saves new position
+			if (!init)
+				return;
+
+			int currPos = int.Parse((string)currTreeStore.GetValue(currTreeIter, (int)CategorieColumnID.Rang));
+
+			TreeIter changeIter = currTreeIter;
+			bool canChange;
+			if (sender == upButton) // Go up or down
+				canChange = currTreeStore.IterPrevious(ref changeIter);
+			else // sender == downButton
+				canChange = currTreeStore.IterNext(ref changeIter);
+
+			if (canChange) {
+				var changePos = int.Parse((string)currTreeStore.GetValue(changeIter, (int)CategorieColumnID.Rang));
+				var changeText = (string)currTreeStore.GetValue(changeIter, (int)CategorieColumnID.Text);
+				int changeTyp;
+
+				// Exchange values (@rang has a SQL-PK constraint)
+				if (IsCurrParent) {
+					changeTyp = API_Contract.CategorieTextParentTypCR[
+							(string)currTreeStore.GetValue(changeIter, (int)CategorieColumnID.Typ)];
+					SaveParentEntry(currTreeIter, false, origText, origTyp, int.MaxValue); // tmp
+					SaveParentEntry(changeIter, false, changeText, changeTyp, currPos);
+					SaveParentEntry(currTreeIter, false, origText, origTyp, changePos);
+				} else {
+					changeTyp = API_Contract.CategorieTextChildTypCR[
+							(string)currTreeStore.GetValue(changeIter, (int)CategorieColumnID.Typ)];
+					string tmpTitel = (string)currTreeStore.GetValue(currParentIter, (int)CategorieColumnID.Text);
+					SaveChildEntry(currTreeIter, currParentIter, tmpTitel, origText, origTyp, int.MaxValue); //tmp
+					SaveChildEntry(changeIter, currParentIter, tmpTitel, changeText, changeTyp, currPos);
+					SaveChildEntry(currTreeIter, currParentIter, tmpTitel, origText, origTyp, changePos);
+				}
+				// UI sorting
+				if (sender == upButton)
+					GtkHelper.SortInByColumn(currTreeStore, (int)CategorieColumnID.Rang, changeIter);
+				else
+					GtkHelper.SortInByColumn(currTreeStore, (int)CategorieColumnID.Rang, currTreeIter);
+
+			}
+		}
+
+		private bool IsDirty()
+		{
+			return origTyp != cbTyp.Active
+					|| !origText.Equals(API_Contract.ConvertEditCategorieToDatabse(textEntry.Buffer));
+		}
+
+		public override void Clear()
+		{
+			Init = false;
+			boldButton.Active = italicButton.Active = false;
+			origTyp = cbTyp.Active = -1;
+			textEntry.Clear();
+			textEntry.Buffer.Clear();
+			origText = "";
 		}
 
 		public override void Dispose()

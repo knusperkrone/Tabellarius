@@ -32,39 +32,22 @@ namespace Tabellarius.ListFrameTypes
 			var tabContent = GenScrollableTree(emptyStore);
 			tabs++;
 			tabView.AppendPage(tabContent, new Label("Tag " + tabs));
-			ShowAll();
+			tabView.ShowAll();
 		}
 
 		public override void AddParentEntry() // Add a Termin
 		{
-			var treeContent = (TreeStore)(treeList[tabView.CurrentPage].Model);
-
 			TimeBox timeBox = new TimeBox(true);
-			timeBox.posEntry.Text = "0"; // Default value
-
+			timeBox.posEntry.Text = "0"; // Default pos
 			Entry textEntry = new Entry();
-			// Get Data from User
-			int activeVisibility = 2; // Getting the active ComboBox is pretty hacky
-			ComboBox cbVisibility = new ComboBox(
-				new string[] { "Notiz", "Mitarbeiter", "Alle" });
-			cbVisibility.Active = activeVisibility;
-			cbVisibility.Changed += delegate { activeVisibility = cbVisibility.Active; };
-
-			int activeType = 1; // Getting the active ComboBox is pretty hacky
-			ComboBox cbType = new ComboBox(
-				new string[] { "aufbau", "programm", "freiwillig" });
-			cbType.Active = activeType;
-			cbType.Changed += delegate { activeType = cbType.Active; };
-
+			ComboBox cbType = new ComboBox(API_Contract.ProgrammTerminTypVal);
+			cbType.Active = 1; // Default is 'Programm'
 			GetUserArgs[] args = new GetUserArgs[] {
-				new GetUserArgs(null, timeBox),
 				new GetUserArgs(new Label("Text"), textEntry),
-				new GetUserArgs(new Label("Sichtbarkeit"), cbVisibility),
-				new GetUserArgs(new Label("Typ"), cbType)
+				new GetUserArgs(new Label("Sichtbarkeit"), cbType),
 			};
+			var diag = new GetUserDataDialog(args, timeBox, "Speichern", 0, "Abbruch", 1);
 
-
-			var diag = new GetUserDataDialog(args, "Speichern", 0, "Abbruch", 1);
 			if (diag.Run() == 0) {
 				bool validated;
 				while (!(validated = timeBox.ValidateTime())) {
@@ -73,25 +56,31 @@ namespace Tabellarius.ListFrameTypes
 						break;
 					}
 				}
-				if (validated) {
-					// Insert input into UI
-					TreeIter insertIter, firstIter;
-					insertIter = treeContent.AppendValues(timeBox.Time, textEntry.Text);
-					treeContent.GetIterFirst(out firstIter);
+				if (validated) { // There is valid user data
+					var treeContent = (TreeStore)(treeList[tabView.CurrentPage].Model);
+					string time = timeBox.Time;
+					string text = textEntry.Text;
+					string typString = GtkHelper.ComboBoxActiveString(cbType);
+					int typ = cbType.Active;
+					// Save on UI
+					TreeIter insertIter;
+					insertIter = treeContent.AppendValues(time, text, typString);
 					GtkHelper.SortInByColumn(treeContent, (int)ProgrammColumnID.Uhrzeit, insertIter);
-
-					// TODO: Save on Database
+					// XXX: Save on Database
+					var insert = new Table_Termin(tabView.CurrentPage, time, text, typ);
+					dbAdapter.InsertEntry(insert);
 				}
 			}
+			// Free Memory
 			diag.Destroy();
-
 			foreach (var arg in args) // Free args
 				arg.Dispose();
 		}
 
 		public override void AddChildEntry() // Add a Beschreibung
 		{
-			TreeIter parentIter = editFrameAdapter.GetActiveParentTreeIter();
+			// Is there a active parent?
+			TreeIter parentIter = editFrameAdapter.ActiveParentTreeIter;
 			if (parentIter.Equals(TreeIter.Zero)) {
 				var error = new SafeCallDialog("Kein Element ausgewählt", "Ok", 0, null, 1);
 				error.Run();
@@ -99,25 +88,32 @@ namespace Tabellarius.ListFrameTypes
 				return;
 			}
 
-			var treeContent = (TreeStore)(treeList[tabView.CurrentPage].Model);
-
-			Entry userText = new Entry();
+			ComboBox cbTyp = new ComboBox(API_Contract.ProgrammTerminTypVal);
+			cbTyp.Active = 0;
+			Entry textEntry = new Entry();
 			var args = new GetUserArgs[] {
-				new GetUserArgs(new Label("Text:"), userText)
+				new GetUserArgs(new Label("Text"), textEntry),
+				new GetUserArgs(new Label("Typ"), cbTyp),
 			};
+			var diag = new GetUserDataDialog(args, null, "Ok", 0, "Abbruch", 1);
 
-			var diag = new GetUserDataDialog(args, "Ok", 0, "Abbruch", 1);
 			if (diag.Run() == 0) {
-				// Insert and sort in
+				var treeContent = (TreeStore)(treeList[tabView.CurrentPage].Model);
+				string text = textEntry.Text;
+				string typString = GtkHelper.ComboBoxActiveString(cbTyp);
+				int typ = cbTyp.Active;
+				// Save on UI
 				TreeIter insertIter, firstIter;
-				insertIter = treeContent.AppendValues(parentIter, "└──", "\t" + userText.Text);
+				insertIter = treeContent.AppendValues(parentIter, "└──", "\t" + text, typString);
 				treeContent.IterNthChild(out firstIter, parentIter, 0);
 				GtkHelper.SortInByColumn(treeContent, (int)ProgrammColumnID.Text, insertIter);
-
-				// TODO: Save on Database
+				// XXX: Save on Database
+				string time = (string)treeContent.GetValue(parentIter, (int)ProgrammColumnID.Uhrzeit);
+				var insert = new Table_Beschreibung(tabView.CurrentPage, time, text, typ);
+				dbAdapter.InsertEntry(insert);
 			}
+			// Free Memory
 			diag.Destroy();
-
 			foreach (var arg in args)
 				arg.Dispose();
 		}
@@ -151,24 +147,6 @@ namespace Tabellarius.ListFrameTypes
 
 			scrollWin.Add(tree);
 			return scrollWin;
-		}
-
-		public override void DataSetChanged()
-		{
-			// Clear everything out
-			for (uint i = 0; i < tabs; i++)
-				tabView.RemovePage(0);
-			tabs = 0;
-
-			foreach (TreeView tree in treeList) {
-				tree.Destroy();
-				tree.Dispose();
-			}
-			treeList.Clear();
-
-			// Repopulate
-			PopulateTabView();
-			ShowAll();
 		}
 
 	}

@@ -3,7 +3,7 @@ using SQLite;
 
 namespace Tabellarius.Database
 {
-	//TODO: Allow multiple PrimaryKeys in the SQLite API
+	//XXX: Allow multiple PrimaryKeys in the SQLite API
 
 	public abstract class DatabaseTable
 	{
@@ -39,21 +39,20 @@ namespace Tabellarius.Database
 		public string Sprache { get; set; }
 		[NotNull]
 		public int Jahr { get; set; }
-		[NotNull]
 		public int Dauer { get; set; }
 
 		public override int Veranstaltungs_ID { get { return Id; } }
 
 		public Table_Veranstaltung() : base("Veranstaltung") { }
 
-		public Table_Veranstaltung(int id, string krzl, string name, string sprache, int jahr, int dauer) : base("Veranstaltung")
+		public Table_Veranstaltung(int id, string krzl, string name, string sprache, int jahr) : base("Veranstaltung")
 		{
 			this.Id = id;
 			this.Kürzel = krzl;
 			this.Name = name;
 			this.Sprache = sprache;
 			this.Jahr = jahr;
-			this.Dauer = dauer;
+			this.Dauer = 4; // TODO: Delete line
 		}
 
 		public override string SETString()
@@ -65,7 +64,7 @@ namespace Tabellarius.Database
 
 		public override string UPDATEString()
 		{
-			return String.Format("ID == '{0}' AND Kürzel == '{1}' AND Name == '{2}' AND Sprache == '{3}' AND Jahr'{4}' AND Dauer == '{5}'",
+			return String.Format("ID == '{0}' AND Kürzel == '{1}' AND Name == '{2}' AND Sprache == '{3}' AND Jahr == '{4}' AND Dauer == '{5}'",
 								Id, Kürzel, Name, Sprache, Jahr, Dauer);
 		}
 

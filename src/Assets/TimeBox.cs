@@ -6,42 +6,52 @@ namespace Tabellarius.Assets
 	public class TimeBox : HBox
 	{
 
-		private Gdk.RGBA invalidColor;
-		private Gdk.RGBA validColor;
+		private Gdk.RGBA invalidColor { get { return API_Contract.invalidColor; } }
+		private Gdk.RGBA validColor { get { return API_Contract.validColor; } }
 
-		private readonly Label hourLabel, minLabel, posLabel;
+		private readonly Label padLabel, hourLabel, minLabel, posLabel;
 		public readonly Entry hourEntry, minEntry, posEntry;
 
 		private string origHour, origMin, origPos;
 
-		public TimeBox(bool start) : base()
+		public TimeBox(bool padding) : base()
 		{
-			invalidColor.Red = invalidColor.Alpha = 1;
-			invalidColor.Blue = invalidColor.Green = 0;
-
-			validColor.Blue = validColor.Green = validColor.Red = validColor.Alpha = 1;
-
 			origHour = origMin = origPos = "";
 
-			hourLabel = new Label("  Stunde");
-			minLabel = new Label("Minute");
-			posLabel = new Label("Rang");
+			if (padding)
+				padLabel = new Label(""); // Padding
+			hourLabel = new Label(" Stunde");
+			minLabel = new Label(" Minute");
+			posLabel = new Label(" Rang");
 
 			hourEntry = new Entry();
 			minEntry = new Entry();
 			posEntry = new Entry();
-
 			hourEntry.WidthChars = minEntry.WidthChars = posEntry.WidthChars = 5;
 
-			var tmpBox = new HBox();
-			tmpBox.PackStart(hourLabel, false, false, 5);
-			tmpBox.PackStart(hourEntry, false, false, 5);
-			tmpBox.PackStart(minLabel, false, false, 5);
-			tmpBox.PackStart(minEntry, false, false, 5);
-			tmpBox.PackStart(posLabel, false, false, 5);
-			tmpBox.PackStart(posEntry, false, false, 5);
 
-			this.PackStart(tmpBox, false, true, 5); // Middle
+			Table table;
+			if (padding) {
+				table = new Table(1, 8, true);
+				table.Attach(padLabel, 0, 1, 0, 1);
+				table.Attach(hourLabel, 1, 2, 0, 1);
+				table.Attach(hourEntry, 2, 3, 0, 1);
+				table.Attach(minLabel, 3, 4, 0, 1);
+				table.Attach(minEntry, 4, 5, 0, 1);
+				table.Attach(posLabel, 5, 6, 0, 1);
+				table.Attach(posEntry, 6, 7, 0, 1);
+			} else {
+				table = new Table(1, 7, true);
+				table.Attach(hourLabel, 0, 1, 0, 1);
+				table.Attach(hourEntry, 1, 2, 0, 1);
+				table.Attach(minLabel, 2, 3, 0, 1);
+				table.Attach(minEntry, 3, 4, 0, 1);
+				table.Attach(posLabel, 4, 5, 0, 1);
+				table.Attach(posEntry, 5, 6, 0, 1);
+			}
+
+
+			this.PackStart(table, false, true, 5); // Middle
 		}
 
 		public bool ValidateTime()
@@ -87,6 +97,11 @@ namespace Tabellarius.Assets
 			}
 
 			return valid;
+		}
+
+		public string OrigTime
+		{
+			get { return origHour + ":" + origMin + ":" + origPos; }
 		}
 
 		public string Time
@@ -141,6 +156,8 @@ namespace Tabellarius.Assets
 
 		public new void Dispose()
 		{
+			if (padLabel != null)
+				padLabel.Dispose();
 			hourLabel.Dispose();
 			minLabel.Dispose();
 			posLabel.Dispose();
