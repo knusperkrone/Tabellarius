@@ -51,11 +51,34 @@ namespace Tabellarius
 
 	public class API_Contract
 	{
+		public static Gtk.TextTag boldTag, italicTag;
+		public static Gdk.RGBA invalidColor, validColor;
+
+		static API_Contract()
+		{
+			// Tags
+			boldTag = new Gtk.TextTag("bold");
+			italicTag = new Gtk.TextTag("italic");
+			boldTag.Weight = Pango.Weight.Bold;
+			italicTag.Style = Pango.Style.Italic;
+
+			// Colors
+			invalidColor.Red = invalidColor.Alpha = 1;
+			invalidColor.Blue = invalidColor.Green = 0;
+			validColor.Blue = validColor.Green = validColor.Red = validColor.Alpha = 1;
+		}
+
 
 		public static readonly string[] SupportedLanguages =
 		{
 			"de",
 			"en"
+		};
+
+		public static readonly string[] SupportedKrzl = //TODO: DbQuery
+		{
+			"KC",
+			"TST"
 		};
 
 		public static readonly string[] ProgrammTerminTypVal =
@@ -166,6 +189,7 @@ namespace Tabellarius
 			return "\t" + s;
 		}
 
+
 		public static void ClearTimeConflicts(Gtk.TreeStore treeContent, Gtk.TreeIter toCheck)
 		{
 
@@ -198,15 +222,6 @@ namespace Tabellarius
 		{
 			var val = (string)store.GetValue(iter, (int)ProgrammColumnID.Uhrzeit);
 			store.SetValue(iter, (int)ProgrammColumnID.Uhrzeit, val.Substring(0, 5) + ":" + rang);
-		}
-
-		public static Gtk.TextTag boldTag, italicTag;
-		static API_Contract()
-		{
-			boldTag = new Gtk.TextTag("bold");
-			italicTag = new Gtk.TextTag("italic");
-			boldTag.Weight = Pango.Weight.Bold;
-			italicTag.Style = Pango.Style.Italic;
 		}
 
 		public static void ConvertDatabaseToEditCategorie(string raw, ref Gtk.TextBuffer buffer)

@@ -27,16 +27,16 @@ namespace Tabellarius
 		public void PassToEditView(TreeView treeView, RowActivatedArgs args, object detail)
 		{
 			if (currView.SaveWithDialog()) {
-				currView.EditTreeRow(treeView, args, detail);
+				currView.PassTreeRow(treeView, args, detail);
 			} else {
-				// Switch selection back
+				// Switch back to old UI selection
 				treeView.Selection.SelectIter(currView.currTreeIter);
 			}
 		}
 
-		public TreeIter GetActiveParentTreeIter()
+		public TreeIter ActiveParentTreeIter
 		{
-			return currView.currParentIter;
+			get { return currView.currParentIter; }
 		}
 
 		public bool ChangeMode(MiddleToolBar.DisplayMode mode)
@@ -44,20 +44,21 @@ namespace Tabellarius
 			if (!currView.SaveWithDialog())
 				return false;
 
-			Remove(currView); // Free Memory
+			// Free Memory
+			this.Remove(currView);
 			currView.Destroy();
 			currView.Dispose();
 
-			if (mode == MiddleToolBar.DisplayMode.Programm)
+			if (mode == MiddleToolBar.DisplayMode.Programm) {
 				currView = new ProgrammEditView();
-			else if (mode == MiddleToolBar.DisplayMode.Kategorie)
+			} else if (mode == MiddleToolBar.DisplayMode.Kategorie) {
 				currView = new CategoryEditView();
-			else
+			} else {
 				currView = new EventEditView();
+			}
 
-			Add(currView);
+			this.Add(currView);
 			currView.ShowAll();
-
 			return true;
 		}
 

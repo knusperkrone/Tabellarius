@@ -13,7 +13,7 @@ namespace Tabellarius
 			if (posLabel != null)
 				this.AddButton(posLabel, pos_id);
 
-			ShowAll();
+			this.ShowAll();
 		}
 
 	}

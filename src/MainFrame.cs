@@ -11,8 +11,7 @@ namespace Tabellarius
 
 		private MainFrame() : base("Tabellarius")
 		{
-			// TODO: get Display resolution
-			SetDefaultSize(900, 600);
+			SetDefaultSize(900, 600); // Valid default size
 			SetPosition(WindowPosition.Center);
 			DeleteEvent += new DeleteEventHandler(OnDelete);
 
@@ -47,7 +46,6 @@ namespace Tabellarius
 			mainBox.PackStart(new HSeparator(), false, true, 0);
 			mainBox.PackStart(paned, true, true, 0);
 			Add(mainBox);
-			ShowAll();
 		}
 
 		public static MainFrame GetInstance()

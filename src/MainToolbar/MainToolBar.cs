@@ -58,7 +58,6 @@ namespace Tabellarius
 				this.PackStart(textToolbar, false, false, 0);
 				textToolbar.ShowAll();
 			}
-			Console.WriteLine("MainToolBar ChangeMode");
 		}
 
 	}

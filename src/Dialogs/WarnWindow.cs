@@ -19,7 +19,7 @@ namespace Tabellarius
 			box.PackEnd(quit, false, true, 0);
 
 			Add(box);
-			ShowAll();
+			this.ShowAll();
 		}
 	}
 }

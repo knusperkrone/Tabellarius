@@ -39,7 +39,7 @@ namespace Tabellarius
 			table.Attach(darea, 0, 2, 3, 4, fill, fill, 0, 0);
 
 			Add(table);
-			ShowAll();
+			this.ShowAll();
 		}
 
 		bool OnTimer()

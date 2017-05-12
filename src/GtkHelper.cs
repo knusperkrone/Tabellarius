@@ -72,5 +72,25 @@ namespace Tabellarius
 			cb.Model = store;
 		}
 
+		public static TreeIter GetLastIter(TreeStore treeContent, TreeIter iter) {
+			TreeIter drag, curr;
+			curr = iter;
+			drag = iter;
+			while (treeContent.IterNext(ref curr)) {
+					drag = curr;
+			}
+			return drag;
+		}
+
+		public static int FindInArray(string[] arr, string val)
+		{
+			// Assert that the @val hast to be in @arr
+			for (int i = 0; i < arr.Length; i++) {
+				if (arr[i].Equals(val))
+					return i;
+			}
+			return -1;
+		}
+
 	}
 }
