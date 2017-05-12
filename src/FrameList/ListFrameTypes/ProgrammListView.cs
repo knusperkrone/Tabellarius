@@ -58,16 +58,18 @@ namespace Tabellarius.ListFrameTypes
 				}
 				if (validated) { // There is valid user data
 					var treeContent = (TreeStore)(treeList[tabView.CurrentPage].Model);
-					string time = timeBox.Time;
+					string finalTime;
+					string tmpTime = timeBox.Time;
 					string text = textEntry.Text;
 					string typString = GtkHelper.ComboBoxActiveString(cbType);
 					int typ = cbType.Active;
 					// Save on UI
 					TreeIter insertIter;
-					insertIter = treeContent.AppendValues(time, text, typString);
+					insertIter = treeContent.AppendValues(tmpTime, text, typString);
 					GtkHelper.SortInByColumn(treeContent, (int)ProgrammColumnID.Uhrzeit, insertIter);
-					// XXX: Save on Database
-					var insert = new Table_Termin(tabView.CurrentPage, time, text, typ);
+					finalTime = API_Contract.ClearTimeConflicts(treeContent, insertIter);
+					// Save on Database
+					var insert = new Table_Termin(tabView.CurrentPage, finalTime, text, typ);
 					dbAdapter.InsertEntry(insert);
 				}
 			}
@@ -88,8 +90,8 @@ namespace Tabellarius.ListFrameTypes
 				return;
 			}
 
-			ComboBox cbTyp = new ComboBox(API_Contract.ProgrammTerminTypVal);
-			cbTyp.Active = 0;
+			ComboBox cbTyp = new ComboBox(API_Contract.ProgrammDescrTypVal);
+			cbTyp.Active = 2; // Default is 'All'
 			Entry textEntry = new Entry();
 			var args = new GetUserArgs[] {
 				new GetUserArgs(new Label("Text"), textEntry),

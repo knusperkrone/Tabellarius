@@ -190,7 +190,7 @@ namespace Tabellarius
 		}
 
 
-		public static void ClearTimeConflicts(Gtk.TreeStore treeContent, Gtk.TreeIter toCheck)
+		public static string ClearTimeConflicts(Gtk.TreeStore treeContent, Gtk.TreeIter toCheck)
 		{
 
 			// Get first Iter with equal time
@@ -212,10 +212,12 @@ namespace Tabellarius
 				hasNext = treeContent.IterNext(ref drag);
 				if (hasNext) {
 					string refVal = (string)treeContent.GetValue(drag, (int)ProgrammColumnID.Uhrzeit);
-					if (!refVal.StartsWith(checkVal.Substring(0, 5)))
+					if (!refVal.StartsWith(checkVal.Substring(0, 5))) // Same HH:MM
 						break;
 				}
 			}
+			// Return the new value of the treeIter
+			return (string)treeContent.GetValue(toCheck, (int)ProgrammColumnID.Uhrzeit);
 		}
 
 		private static void SetRang(Gtk.TreeStore store, Gtk.TreeIter iter, int rang)

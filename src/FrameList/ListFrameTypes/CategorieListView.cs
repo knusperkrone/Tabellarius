@@ -118,7 +118,7 @@ namespace Tabellarius.ListFrameTypes
 					row = 0;
 				}
 				// Save on UI
-				treeContent.AppendValues(row, typString, text);
+				treeContent.AppendValues(parentIter, row, typString, text);
 				// Save on Database
 				var titelName = (string)treeContent.GetValue(parentIter, (int)CategorieColumnID.Text);
 				var insert = new Table_Kategorie_Tab_Text(tabNames[tabView.CurrentPage],

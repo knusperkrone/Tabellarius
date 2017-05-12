@@ -109,17 +109,19 @@ namespace Tabellarius.EditFrameTypes
 
 			// Mutable values
 			string validTime;
+			string textString = textEntry.Buffer.Text;
 			string origTime = timeBox.OrigTime;
-			string databaseString = API_Contract.ConvertEditViewToDatabase(textEntry.Buffer.Text);
+			string typString = GtkHelper.ComboBoxActiveString(cbTyp);
+			int typ = cbTyp.Active;
 
-			// Save on Database
+			// Prepare for Database
 			DatabaseTable orig, newElem;
 			if (IsCurrParent) {
-				// Termin
-				validTime = timeBox.Time; // 'New' time
+				// Termin, set values, update children in database
+				validTime = timeBox.Time;
+				// Update children
 				TreeIter childIter;
 				if (currTreeStore.IterChildren(out childIter, currTreeIter)) {
-					// Update children
 					do {
 						var childText = (string)currTreeStore.GetValue(childIter, (int)ProgrammColumnID.Text);
 						var childTime = (string)currTreeStore.GetValue(childIter, (int)ProgrammColumnID.Uhrzeit);
@@ -129,28 +131,32 @@ namespace Tabellarius.EditFrameTypes
 						dbAdapter.UpdateEntry(orig, newElem);
 					} while (currTreeStore.IterNext(ref childIter));
 				}
+
+				orig = new Table_Termin(day, origTime, origText, origTyp);
+				newElem = new Table_Termin(day, validTime, textString, typ);
 			} else {
 				// Descr
 				validTime = origTime; // Parent time, we got on EditTreeRow()
+				textString = API_Contract.ConvertEditViewToDatabase(textString);
+
+				orig = new Table_Beschreibung(day, origTime, origText, origTyp);
+				newElem = new Table_Beschreibung(day, validTime, textString, typ);
 			}
-			newElem = new Table_Beschreibung(day, validTime, databaseString, cbTyp.Active);
-			orig = new Table_Beschreibung(day, origTime, origText, origTyp);
 			dbAdapter.UpdateEntry(orig, newElem);
 
 			// Save on UI
-			if (!IsCurrParent)
-				databaseString = API_Contract.ConvertDatabaseToTreeChild(databaseString);
-			currTreeStore.SetValue(currTreeIter, (int)ProgrammColumnID.Text, databaseString);
+			currTreeStore.SetValue(currTreeIter, (int)ProgrammColumnID.Uhrzeit, validTime);
+			currTreeStore.SetValue(currTreeIter, (int)ProgrammColumnID.Typ, typString);
 
-
-			if (IsCurrParent) { // Only Parent Nodes can change Time
-				currTreeStore.SetValue(currTreeIter, (int)ProgrammColumnID.Uhrzeit, validTime);
-				// Set new value, sort it in and update UI valiue
+			// Set UI text value and sort in
+			if (IsCurrParent) {
+				// Sort by time, and clear conflicts
+				currTreeStore.SetValue(currTreeIter, (int)ProgrammColumnID.Text, textString);
 				var iter = GtkHelper.SortInByColumn(currTreeStore, (int)ProgrammColumnID.Uhrzeit, currTreeIter);
-				API_Contract.ClearTimeConflicts(currTreeStore, iter);
-				timeBox.Time = (string)currTreeStore.GetValue(currTreeIter, (int)ProgrammColumnID.Uhrzeit);
+				validTime = API_Contract.ClearTimeConflicts(currTreeStore, iter);
 			} else {
-				// Sort in in subtree
+				// Sort by text
+				currTreeStore.SetValue(currTreeIter, (int)ProgrammColumnID.Text, API_Contract.ConvertDatabaseToTreeChild(textString));
 				GtkHelper.SortInByColumn(currTreeStore, (int)ProgrammColumnID.Text, currTreeIter);
 			}
 
