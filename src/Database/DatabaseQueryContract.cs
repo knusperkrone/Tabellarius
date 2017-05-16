@@ -36,4 +36,8 @@ namespace Tabellarius.Database
 		public string InstanzStartDatum { set; get; }
 	}
 
+	public class IntegrityQuery {
+
+	}
+
 }

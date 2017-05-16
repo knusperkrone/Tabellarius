@@ -75,11 +75,17 @@ namespace Tabellarius
 			"en"
 		};
 
-		public static readonly string[] SupportedKrzl = //TODO: DbQuery
+		public static string[] SupportedKrzl
 		{
-			"KC",
-			"TST"
-		};
+			get {
+				try {
+					// Get all the Krzl, that are in the current Database
+					return DatabaseAdapter.GetInstance().GetCurrentKrzl();
+				} catch(Exception) {
+					return null;
+				}
+			}
+		}
 
 		public static readonly string[] ProgrammTerminTypVal =
 		{

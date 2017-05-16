@@ -244,6 +244,13 @@ namespace Tabellarius.Database
 			return treeStore;
 		}
 
+		public List<Table_Veranstaltung> GetAllKrzl()
+		{
+			return db.Query<Table_Veranstaltung>(@"
+					SELECT * FROM Veranstaltung
+					GROUP BY Kürzel", "");
+		}
+
 		public TableQuery<Table_Kategorie> GetCategoriesFor(int veranstaltungs_id)
 		{
 			return db.Table<Table_Kategorie>()

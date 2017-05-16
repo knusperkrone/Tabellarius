@@ -62,7 +62,7 @@ namespace Tabellarius.Database
 			}
 			//var list = new List<DatabaseTable>();
 
-			//TODO: Merge!
+			//TODO: Merging!
 			//Veranstaltung
 			//Instanz
 			//Termin

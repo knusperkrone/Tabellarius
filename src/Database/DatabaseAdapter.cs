@@ -7,9 +7,9 @@ using Tabellarius.Database;
 
 namespace Tabellarius
 {
-
 	public class DatabaseAdapter
 	{
+
 		private static DatabaseAdapter instance;
 		private static readonly string downloadPath = "https://github.com/knusperkrone/Konfi-Castle/raw/master/DatenBankSync/KonfiCastle.db";
 		private static readonly string dataFolder = "." + Path.DirectorySeparatorChar.ToString() + "Projekte" + Path.DirectorySeparatorChar.ToString();
@@ -65,6 +65,10 @@ namespace Tabellarius
 			}
 		}
 
+		private DatabaseAdapter()
+		{
+			//TODO: Database Chooser;
+		}
 
 		private DatabaseAdapter(string dbName)
 		{
@@ -86,19 +90,25 @@ namespace Tabellarius
 
 		public static DatabaseAdapter GetInstance()
 		{
-			if (instance == null) {
-				//TODO: Database chooser
-				throw new Exception("No inited Database");
-			}
+			if (instance == null)
+				instance = new DatabaseAdapter();
 			return instance;
 		}
 
-		public static void setDb(string name)
+		public static bool SetDb(string name, bool newDb)
 		{
+			var checker = new DatabaseChecker(name);
+			if (!checker.CheckIntegrity()) {
+				checker.ShowInvalidEntrys();
+				return false;
+			}
+
 			if (instance == null)
 				instance = new DatabaseAdapter(name);
 			else
 				instance.Init(name);
+
+			return true;
 		}
 
 		public Gtk.TreeStore GetListFrameContentFor(int day)
@@ -198,7 +208,18 @@ namespace Tabellarius
 			}
 		}
 
-		public Gtk.TreeStore GetEventContent() {
+		public string[] GetCurrentKrzl()
+		{
+			var query = dbReader.GetAllKrzl();
+			string[] krzl = new string[query.Count];
+			int i = 0;
+			foreach (var s in query)
+				krzl[i++] = s.Kürzel;
+			return krzl;
+		}
+
+		public Gtk.TreeStore GetEventContent()
+		{
 			if (!init)
 				throw new Exception("DatabaseAdapter is already closed");
 			return dbReader.GetEventContent();

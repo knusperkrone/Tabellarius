@@ -2,7 +2,6 @@
 using System.IO;
 using System;
 
-
 namespace Tabellarius
 {
 	public class MainProgram
@@ -17,22 +16,24 @@ namespace Tabellarius
 			try {
 				Application.Init();
 			} catch (Exception) {
-				// TODO: Installer dialog
-				var OS = Environment.OSVersion;
+                // TODO: Installer dialog
+                Console.WriteLine("Failed to init GUI!");
+                var OS = Environment.OSVersion;
 				switch (OS.Platform) {
 					case PlatformID.Unix:
-						Console.WriteLine("Install mono + gtk#"); break;
+						Console.WriteLine("For Unix: Install mono + gtk#"); break;
 					case PlatformID.MacOSX:
-						Console.WriteLine("Install mono + gtk#"); break;
+						Console.WriteLine("For Max: Install mono + gtk#"); break;
 					default:
-						Console.WriteLine("Install gtk#"); break;
+						Console.WriteLine("For Windows: Install gtk#"); break;
 				}
-			}
+                return;
+            }
 
 			GLib.ExceptionManager.UnhandledException += UExecptionHandler;
 
 			// TODO: DatabaseFileChooser Dialog
-			DatabaseAdapter.setDb("backend (copy).db");
+			DatabaseAdapter.SetDb("backend (copy).db", false);
 
 			MainFrame.GetInstance().ShowAll();
 			Application.Run();

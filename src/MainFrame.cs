@@ -8,7 +8,6 @@ namespace Tabellarius
 
 		private static MainFrame instance;
 
-
 		private MainFrame() : base("Tabellarius")
 		{
 			SetDefaultSize(900, 600); // Valid default size
