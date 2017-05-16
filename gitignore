@@ -1,8 +1,0 @@
-*.exe
-*.dll
-.propteries
-.scannerwork/
-Build/*
-Properties/*
-sonar-project.properties
-Makefile
