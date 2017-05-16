@@ -1,0 +1,5 @@
+projectKey=Tabellarius
+serverUrl=http://localhost:9000
+dashboardUrl=http://localhost:9000/dashboard/index/Tabellarius
+ceTaskId=AVwQ38mLedZ_mkns9zJE
+ceTaskUrl=http://localhost:9000/api/ce/task?id=AVwQ38mLedZ_mkns9zJE
