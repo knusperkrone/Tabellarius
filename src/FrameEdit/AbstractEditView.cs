@@ -1,25 +1,19 @@
-using System;
-
 namespace Tabellarius.EditFrameTypes
 {
 	public abstract class AbstractEditView : Gtk.VBox
 	{
 
-		protected DatabaseAdapter dbAdapter;
-
-		protected Gtk.TreeStore currTreeStore { get; set; }
 		public Gtk.TreeIter currParentIter { get; protected set; }
 		public Gtk.TreeIter currTreeIter { get; protected set; }
+		protected Gtk.TreeStore currTreeStore { get; set; }
+		protected readonly Gtk.Button saveButton, cancelButton;
 
 		protected bool init;
-		protected abstract bool Init { get; set; }
+		protected abstract bool Init {  set; }
 
-		protected readonly Gtk.Button saveButton, cancelButton;
 
 		protected AbstractEditView()
 		{
-			// Inits necessary UI and values
-			dbAdapter = DatabaseAdapter.GetInstance();
 
 			saveButton = new Gtk.Button("Speichern");
 			cancelButton = new Gtk.Button("Zurücksetzen");
@@ -33,39 +27,29 @@ namespace Tabellarius.EditFrameTypes
 			this.PackEnd(buttonBox, false, false, 5);
 		}
 
-		/* Fills the UI, with the passed ListRow and make it editable */
-		protected abstract void EditTreeRow(Gtk.TreeView treeView, Gtk.RowActivatedArgs args, object tabData);
 		/* Clears out the Whole UI Elements */
 		public abstract void Clear();
+
+		public virtual new void Dispose()
+		{
+			saveButton.Dispose();
+			cancelButton.Dispose();
+			base.Dispose();
+		}
+
 		/* Resets all UI values to the last Saved values */
 		protected abstract void OnCancel(object sender, System.EventArgs args);
+
 		/* Checks if data integrity and save, also indicates invalid input */
 		protected abstract bool OnSave();
-		/* Checks if the View needs to be saved, before beeing dismissed */
-		protected abstract bool SaveNecessary();
 
-		/* Setup/Validate data for the GUI View */
-		public void PassTreeRow(Gtk.TreeView treeView, Gtk.RowActivatedArgs args, object tabData)
-		{
-			if (treeView == null || args == null) {
-				Clear();
-				Init = false;
-				throw new Exception("Es können keine leeren Listenelemente übergeben werden");
-			}
 
-			// Save necessary tree data
-			Gtk.TreeIter currIter;
-			this.currTreeStore = (Gtk.TreeStore)treeView.Model;
-			if (!this.currTreeStore.GetIter(out currIter, args.Path)) {
-				Clear();
-				Init = false;
-				throw new Exception("Das Listenelement konnte nicht gefunden werden!");
-			}
-			this.currTreeIter = currIter;
 
-			Init = true;
-			EditTreeRow(treeView, args, tabData); // Call template Method
+		protected bool SaveNecessary() {
+			return init && IsDirty();
 		}
+
+		protected abstract bool IsDirty();
 
 		/* Returns if the TreeRowArgs are for a parent Element */
 		protected static bool IsParent(Gtk.RowActivatedArgs args)
@@ -99,13 +83,6 @@ namespace Tabellarius.EditFrameTypes
 			}
 			saveDiag.Destroy();
 			return ret;
-		}
-
-		public virtual new void Dispose()
-		{
-			saveButton.Dispose();
-			cancelButton.Dispose();
-			base.Dispose();
 		}
 
 	}

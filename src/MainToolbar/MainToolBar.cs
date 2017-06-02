@@ -1,6 +1,5 @@
 using Gtk;
-using System;
-using Tabellarius.MainToolbar;
+using Tabellarius.ToolbarItem;
 
 namespace Tabellarius
 {
@@ -9,7 +8,8 @@ namespace Tabellarius
 
 		private static MainToolBar instance;
 
-		private TextToolbar textToolbar = null;
+		private KategorieChooserTBItem kategorieItem;
+		private ProgrammChooserTBItem programmItem;
 
 		private MainToolBar() : base()
 		{
@@ -20,12 +20,10 @@ namespace Tabellarius
 			toolbar.ToolbarStyle = ToolbarStyle.Icons;
 
 			ToolButton addDay = new ToolButton(Stock.New);
-			addDay.Clicked += delegate { listAdapter.AddTab(); };
-
 			ToolButton addParent = new ToolButton(Stock.Add);
-			addParent.Clicked += delegate { listAdapter.AddParentEntry(); };
-
 			ToolButton addChild = new ToolButton(Stock.Convert);
+			addDay.Clicked += delegate { listAdapter.AddTab(); };
+			addParent.Clicked += delegate { listAdapter.AddParentEntry(); };
 			addChild.Clicked += delegate { listAdapter.AddChildEntry(); };
 
 			toolbar.Insert(addDay, 0);
@@ -33,8 +31,10 @@ namespace Tabellarius
 			toolbar.Insert(addChild, 2);
 			toolbar.Insert(new SeparatorToolItem(), 3);
 
+			programmItem = new ProgrammChooserTBItem();
+
 			this.PackStart(toolbar, false, true, 2);
-			this.PackStart(new ProgrammToolbar(), false, false, 10);
+			this.PackStart(programmItem, false, false, 10);
 		}
 
 		public static MainToolBar GetInstance()
@@ -44,20 +44,32 @@ namespace Tabellarius
 			return instance;
 		}
 
-		public void ChangeMode(MiddleToolBar.DisplayMode mode)
+		public void ChangeMode(DisplayMode mode)
 		{
-			if (textToolbar != null) {
-				this.Remove(textToolbar);
-				textToolbar.Destroy();
-				textToolbar.Dispose();
-				textToolbar = null;
+			if (mode == DisplayMode.TEXTE) {
+				// Add extra items, if they are not alredy there
+				if (kategorieItem == null) {
+					kategorieItem = new KategorieChooserTBItem();
+					this.PackStart(kategorieItem, false, false, 0);
+					kategorieItem.ShowAll();
+				}
+			} else if (mode != DisplayMode.KATEGORIE
+							&& kategorieItem != null) {
+				// Free Items
+				this.Remove(kategorieItem);
+				kategorieItem.Destroy();
+				kategorieItem.Dispose();
+				kategorieItem = null;
 			}
+		}
 
-			if (mode == MiddleToolBar.DisplayMode.Kategorie) {
-				textToolbar = new TextToolbar();
-				this.PackStart(textToolbar, false, false, 0);
-				textToolbar.ShowAll();
-			}
+		public void DataChanged()
+		{
+
+			if (kategorieItem != null)
+				kategorieItem.DataChanged();
+			if (programmItem != null)
+				programmItem.DataChanged();
 		}
 
 	}

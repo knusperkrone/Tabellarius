@@ -1,0 +1,12 @@
+*.db
+*.dll
+*.exe
+*.exe.mdb
+ext/
+bin/
+build/
+obj/
+Properties/
+.vscode/
+Makefile
+omnisharp.json

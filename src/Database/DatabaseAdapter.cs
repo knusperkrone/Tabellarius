@@ -1,8 +1,5 @@
-using System.IO;
 using System.Net;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using Tabellarius.Database;
 
 namespace Tabellarius
@@ -12,7 +9,6 @@ namespace Tabellarius
 
 		private static DatabaseAdapter instance;
 		private static readonly string downloadPath = "https://github.com/knusperkrone/Konfi-Castle/raw/master/DatenBankSync/KonfiCastle.db";
-		private static readonly string dataFolder = "." + Path.DirectorySeparatorChar.ToString() + "Projekte" + Path.DirectorySeparatorChar.ToString();
 
 		private bool init = false;
 		private bool activeVeranstaltung = false;
@@ -65,10 +61,7 @@ namespace Tabellarius
 			}
 		}
 
-		private DatabaseAdapter()
-		{
-			//TODO: Database Chooser;
-		}
+		private DatabaseAdapter() { }
 
 		private DatabaseAdapter(string dbName)
 		{
@@ -77,15 +70,13 @@ namespace Tabellarius
 
 		private void Init(string dbName)
 		{
-			if (!Directory.Exists(dataFolder)) // Default dir
-				Directory.CreateDirectory(dataFolder);
-
 			if (init) // Close existing connections
 				Close();
 			init = true;
 
-			dbWriter = new DatabaseWriter(dataFolder + dbName);
-			dbReader = new DatabaseReader(dataFolder + dbName);
+			dbWriter = new DatabaseWriter(dbName);
+			dbReader = new DatabaseReader(dbName);
+			Console.WriteLine("[DBADAPTER] Inited Database: " + dbName);
 		}
 
 		public static DatabaseAdapter GetInstance()
@@ -97,12 +88,6 @@ namespace Tabellarius
 
 		public static bool SetDb(string name, bool newDb)
 		{
-			var checker = new DatabaseChecker(name);
-			if (!checker.CheckIntegrity()) {
-				checker.ShowInvalidEntrys();
-				return false;
-			}
-
 			if (instance == null)
 				instance = new DatabaseAdapter(name);
 			else
@@ -150,6 +135,11 @@ namespace Tabellarius
 			return tmp;
 		}
 
+		public Gtk.TreeStore GetCategorieTabNamesContent()
+		{
+			return dbReader.GetCategoriesContent(curr_veranstaltungsId);
+		}
+
 		public Gtk.TreeStore GetTextFrameContentFor(int tabIndex)
 		{
 			if (!activeVeranstaltung)
@@ -164,11 +154,17 @@ namespace Tabellarius
 			dbWriter.DbInsert(elem);
 		}
 
-		public void UpdateEntry(DatabaseTable oldElem, DatabaseTable newElem)
+		public void MakeNonQuery(string command) {
+			dbWriter.NonQuery(command);
+		}
+
+		public void UpdateEntry(DatabaseTable origElem, DatabaseTable newElem)
 		{
+			if (origElem.GetType() != newElem.GetType())
+				throw new Exception("Inconsistent types");
 			if (!init)
 				throw new Exception("DatabaseAdapter is already closed");
-			dbWriter.DbUpdate(oldElem, newElem);
+			dbWriter.DbUpdate(origElem, newElem);
 		}
 
 		public void DeleteEntry(DatabaseTable elem)
@@ -250,7 +246,7 @@ namespace Tabellarius
 
 			try {
 				var diag = new DownloadWindow("Lade Datenbank herunter...");
-				new WebClient().DownloadFile(downloadPath, dataFolder + "MAGIC_NAME"); //TODO:
+				new WebClient().DownloadFile(downloadPath, "MAGIC_NAME"); //TODO:
 				diag.Destroy();
 				Console.WriteLine("Db heruntergeladen");
 			} catch (Exception e) {

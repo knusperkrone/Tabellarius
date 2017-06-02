@@ -9,7 +9,7 @@ namespace Tabellarius
 		private static TitleBar instance;
 
 
-		private TitleBar(AccelGroup agr)
+		private TitleBar()
         {
             // Files
             MenuItem files = new MenuItem("Files");
@@ -17,7 +17,7 @@ namespace Tabellarius
             files.Submenu = fileMenu;
             // SubMenus_Files
             MenuItem exit_Files = new MenuItem("Exit");
-            exit_Files.AddAccelerator("activate", agr, new AccelKey(Gdk.Key.q, Gdk.ModifierType.ControlMask, AccelFlags.Visible));
+            //exit_Files.AddAccelerator("activate", agr, new AccelKey(Gdk.Key.q, Gdk.ModifierType.ControlMask, AccelFlags.Visible));
             exit_Files.Activated += MainFrame.OnDelete;
             fileMenu.Append(exit_Files);
 
@@ -25,9 +25,9 @@ namespace Tabellarius
             this.Append(files);
         }
 
-        public static TitleBar GetInstance(AccelGroup agr) {
+        public static TitleBar GetInstance() {
             if (instance == null)
-				instance = new TitleBar(agr);
+				instance = new TitleBar();
 			return instance;
 		}
 

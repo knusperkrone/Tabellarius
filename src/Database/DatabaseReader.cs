@@ -103,17 +103,18 @@ namespace Tabellarius.Database
 			for (uint i = 0; i < dayList.Length;) {
 
 				var currItem = dayList[i];
-				var iter = treeStore.AppendValues(currItem.termin_Uhrzeit,
-										currItem.termin_Titel,
-										API_Contract.ProgrammTerminTypHR[currItem.termin_Typ]);
+				var iter = treeStore.AppendValues(
+										"" + currItem.termin_Uhrzeit,
+										"" + currItem.termin_Titel,
+										"" + API_Contract.ProgrammTerminTypHR[currItem.termin_Typ]);
 
 				if (currItem.beschreibung_Text != null) {
 					// While has childs
 					do {
 						treeStore.AppendValues(iter,
 								"└──",
-								API_Contract.ConvertDatabaseToTreeChild(dayList[i].beschreibung_Text),
-								API_Contract.ProgrammDescrTypHR[currItem.beschreibung_Typ]);
+								"" + API_Contract.ConvertDatabaseToTreeChild(dayList[i].beschreibung_Text),
+								"" + API_Contract.ProgrammDescrTypHR[currItem.beschreibung_Typ]);
 						i++;
 					} while (i < dayList.Length && currItem.termin_Uhrzeit.Equals(dayList[i].termin_Uhrzeit) && currItem.termin_Tag == dayList[i].termin_Tag);
 					continue; // No need to count up
@@ -223,22 +224,23 @@ namespace Tabellarius.Database
 					continue;
 
 				CategorieQuery currElem = titles[0];
-				currIter = treeStore.AppendValues(currElem.TitelRang,
-								API_Contract.CategorieTextParentTypHR[currElem.TitelTyp]
-								, currElem.Titel);
+				currIter = treeStore.AppendValues(
+								"" + currElem.TitelRang,
+								"" + API_Contract.CategorieTextParentTypHR[currElem.TitelTyp],
+								"" + currElem.Titel);
 				try {
 
 					if (currElem.Text != null) {
 						foreach (var text in titles) {
 							treeStore.AppendValues(currIter,
-								text.TextRang,
-								API_Contract.CategorieTextChildTypHR[currElem.TextTyp],
-								text.Text);
+								"" + text.TextRang,
+								"" + API_Contract.CategorieTextChildTypHR[currElem.TextTyp],
+								"" + text.Text);
 						}
 					}
 				} catch (Exception e) {
 					Console.WriteLine(e.ToString());
-					return new Gtk.TreeStore(typeof(int), typeof(string), typeof(string));
+					return new Gtk.TreeStore(typeof(string), typeof(string), typeof(string));
 				}
 			}
 			return treeStore;
@@ -249,6 +251,16 @@ namespace Tabellarius.Database
 			return db.Query<Table_Veranstaltung>(@"
 					SELECT * FROM Veranstaltung
 					GROUP BY Kürzel", "");
+		}
+
+		public TreeStore GetCategoriesContent(int veranstaltungs_id)
+		{
+			var query = GetCategoriesFor(veranstaltungs_id);
+			TreeStore store = new TreeStore(typeof(string));
+			foreach(Table_Kategorie kategorie in query) {
+				store.AppendValues(kategorie.Titel);
+			}
+			return store;
 		}
 
 		public TableQuery<Table_Kategorie> GetCategoriesFor(int veranstaltungs_id)
@@ -267,7 +279,7 @@ namespace Tabellarius.Database
 		public TreeStore GetEventContent()
 		{
 			// Id, VeranstaltungName, VeranstaltungsKürzel, VeranstaltungSprache, VeranstaltungZeit
-			TreeStore treeStore = new TreeStore(typeof(int), typeof(string), typeof(string), typeof(string), typeof(string));
+			TreeStore treeStore = new TreeStore(typeof(string), typeof(string), typeof(string), typeof(string), typeof(string));
 			EventQuery[] query = db.Query<EventQuery>(@"
 			SELECT
 				Veranstaltung.Id  AS VeranstaltungID,
@@ -290,17 +302,19 @@ namespace Tabellarius.Database
 				var curr = query[i];
 				int parentId = query[i].VeranstaltungID;
 				var parentLang = curr.VeranstaltungSprache;
-				var currIter = treeStore.AppendValues(curr.VeranstaltungID,
-													curr.VeranstaltungName,
-													curr.VeranstaltungsKürzel,
-													parentLang,
+				var currIter = treeStore.AppendValues(
+													"" + curr.VeranstaltungID,
+													"" + curr.VeranstaltungName,
+													"" + curr.VeranstaltungsKürzel,
+													"" + parentLang,
 													"" + curr.VeranstaltungJahr);
 				do { // Childs (Instanzen)
-					treeStore.AppendValues(currIter, curr.InstanzID,
+					treeStore.AppendValues(currIter,
+											"" + curr.InstanzID,
 											"",
 											"",
 											"",
-											curr.InstanzStartDatum);
+											"" + curr.InstanzStartDatum);
 					i++;
 					if (i < query.Length)
 						curr = query[i];

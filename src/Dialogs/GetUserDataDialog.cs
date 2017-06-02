@@ -32,7 +32,7 @@ namespace Tabellarius
 	public class GetUserDataDialog : Dialog
 	{
 		public GetUserDataDialog(GetUserArgs[] args, Widget topWidget, string posLabel, int pos_id, string negLabel, int neg_id)
-								: base("Benutzereingabe", MainFrame.GetInstance(), DialogFlags.DestroyWithParent, new object())
+				: base("Benutzereingabe", FrameManager.ActiveWindow, DialogFlags.DestroyWithParent, new object())
 		{
 			if (topWidget != null) {
 				this.ContentArea.PackStart(topWidget, false, true, 2);

@@ -1,5 +1,4 @@
 using Gtk;
-using System;
 using Tabellarius.Assets;
 using Tabellarius.Database;
 
@@ -9,14 +8,13 @@ namespace Tabellarius.ListFrameTypes
 	{
 
 		public EventListView() : base(/*Magic happens here*/) {
-			// TODO: Set tab visibility to false
+			ShowTabs = false;
 		}
 
 		protected override void PopulateTabView()
 		{
-			tabs = 1;
-			var treeWindow = GenScrollableTree(dbAdapter.GetEventContent());
-			tabView.AppendPage(treeWindow, new Label("Veranstaltungen"));
+			var treeWindow = GenerateTabContent(dbAdapter.GetEventContent());
+			AddTab(treeWindow, "Veranstaltungen");
 		}
 
 		public override void AddChildEntry()
@@ -39,9 +37,9 @@ namespace Tabellarius.ListFrameTypes
 					}
 				}
 				if (validated) { // There is valid user data
-					var treeContent = (TreeStore)treeList[0].Model;
+					var treeContent = CurrTreeStore;
 					string time = timeBox.Time;
-					int vId = (int)treeContent.GetValue(parIter, (int)EventColumnId.ID);
+					int vId = int.Parse((string)treeContent.GetValue(parIter, (int)EventColumnId.ID));
 					int iId = treeContent.IterNChildren(parIter) + 1;
 					if (iId != 1) // XXX: Start counting with 1 here (beta)
 						iId++;
@@ -61,9 +59,7 @@ namespace Tabellarius.ListFrameTypes
 		public override void AddParentEntry()
 		{
 			var parIter = editFrameAdapter.ActiveParentTreeIter;
-			var treeContent = (TreeStore)treeList[0].Model;
-
-			TreeIter lastIter = GtkHelper.GetLastIter(treeContent, parIter);
+			var treeContent = CurrTreeStore;
 
 			EventTimeBox timeBox = new EventTimeBox(true);
 			ComboBox cbKrz = new ComboBox(API_Contract.SupportedKrzl);
@@ -143,11 +139,9 @@ namespace Tabellarius.ListFrameTypes
 			return; // Nothing to do here!
 		}
 
-		protected override ScrolledWindow GenScrollableTree(TreeStore treeContent)
+		protected override TabContent GenerateTabContent(TreeStore treeContent)
 		{
-			var scrollWin = new ScrolledWindow();
-			scrollWin.ShadowType = ShadowType.EtchedOut;
-			scrollWin.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
+			var tc = RegisterTabContent();
 
 			var idColumn = new TreeViewColumn("Id", GenTextCell(), "text", EventColumnId.ID);
 			var nameColumn = new TreeViewColumn("Name", GenTextCell(), "text", EventColumnId.Name);
@@ -155,26 +149,19 @@ namespace Tabellarius.ListFrameTypes
 			var langColumn = new TreeViewColumn("Sprache", GenTextCell(), "text", EventColumnId.Sprache);
 			var timeColumn = new TreeViewColumn("Zeit", GenTextCell(), "text", EventColumnId.Zeit);
 
-			var tree = new TreeView();
-			tree.AppendColumn(idColumn);
-			tree.AppendColumn(nameColumn);
-			tree.AppendColumn(krzlColumn);
-			tree.AppendColumn(langColumn);
-			tree.AppendColumn(timeColumn);
-			tree.EnableGridLines = TreeViewGridLines.Both;
-			tree.HeadersClickable = false;
-			tree.HeadersVisible = true;
-			tree.Model = treeContent;
-			tree.RulesHint = true;
-			tree.RowActivated += delegate (object sender, RowActivatedArgs args)
+			tc.tree.AppendColumn(idColumn);
+			tc.tree.AppendColumn(nameColumn);
+			tc.tree.AppendColumn(krzlColumn);
+			tc.tree.AppendColumn(langColumn);
+			tc.tree.AppendColumn(timeColumn);
+			tc.tree.HeadersVisible = true;
+			tc.tree.Model = treeContent;
+			tc.tree.RowActivated += delegate (object sender, RowActivatedArgs args)
 			{
 				editFrameAdapter.PassToEditView((TreeView)sender, args, null);
 			};
 
-			this.treeList.Add(tree);
-			scrollWin.Add(tree);
-
-			return scrollWin;
+			return tc;
 		}
 
 	}

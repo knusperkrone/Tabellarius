@@ -47,18 +47,28 @@ namespace Tabellarius
 		}
 
 		// Called by MiddleToolbar
-		public void ChangeMode(MiddleToolBar.DisplayMode mode)
+		public void ChangeMode(DisplayMode mode)
 		{
 			Remove(currView); // Free Memory
 			currView.Destroy();
 			currView.Dispose();
 
-			if (mode == MiddleToolBar.DisplayMode.Programm)
-				currView = new ProgrammListView();
-			else if (mode == MiddleToolBar.DisplayMode.Kategorie)
-				currView = new CategorieListView();
-			else
-				currView = new EventListView();
+			switch (mode) {
+				case DisplayMode.PROGRAMM:
+					currView = new ProgrammListView();
+					break;
+				case DisplayMode.KATEGORIE:
+					currView = new CategorieListView();
+					break;
+				case DisplayMode.TEXTE:
+					currView = new TextsListView();
+					break;
+				case DisplayMode.VERANSTALTUNG:
+					currView = new EventListView();
+					break;
+				default:
+					throw new System.NotImplementedException("Invalid DisplayMode");
+			}
 
 			Add(currView);
 			currView.ShowAll();

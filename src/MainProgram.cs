@@ -12,39 +12,38 @@ namespace Tabellarius
 			// Change to default-Dir
 			Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
 
-			// Check for installed GTK#
 			try {
-				Application.Init();
+				Application.Init(); // Check for installed GTK#
 			} catch (Exception) {
-                // TODO: Installer dialog
-                Console.WriteLine("Failed to init GUI!");
-                var OS = Environment.OSVersion;
+				Console.WriteLine("Failed to init GUI!");
+				var OS = Environment.OSVersion;
 				switch (OS.Platform) {
 					case PlatformID.Unix:
-						Console.WriteLine("For Unix: Install mono + gtk#"); break;
+						Console.WriteLine("[Unix] Install mono + gtk#"); break;
 					case PlatformID.MacOSX:
-						Console.WriteLine("For Max: Install mono + gtk#"); break;
+						Console.WriteLine("[MacOS] Install mono + gtk#"); break;
 					default:
-						Console.WriteLine("For Windows: Install gtk#"); break;
+						Console.WriteLine("[Windows] Install gtk#"); break;
 				}
-                return;
-            }
+				return; // Exit programm
+			}
 
 			GLib.ExceptionManager.UnhandledException += UExecptionHandler;
 
-			// TODO: DatabaseFileChooser Dialog
-			DatabaseAdapter.SetDb("backend (copy).db", false);
+			//new DatabaseChooser().ShowAll();
+			FrameManager.GetInstance().StartGUI();
 
-			MainFrame.GetInstance().ShowAll();
 			Application.Run();
 			Application.Quit();
 		}
 
-		public static void UExecptionHandler(UnhandledExceptionEventArgs args) {
+		public static void UExecptionHandler(UnhandledExceptionEventArgs args)
+		{
 			if (args.IsTerminating)
 				Console.WriteLine(args.ToString());
 			else
-				new SafeCallDialog("Das programm hat sich mit folgender Fehlermeldung beendet:\n" + args.ExceptionObject.ToString(), "Ok", 0, null, 0).Run();
+				new SafeCallDialog("Das programm hat sich mit folgender Fehlermeldung beendet:\n" + args.ExceptionObject, "Ok", 0, null, 0).Run();
+			Application.Quit();
 		}
 
 	}

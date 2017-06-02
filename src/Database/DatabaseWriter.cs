@@ -1,6 +1,6 @@
-using System.Collections.Generic;
-using System.IO;
 using SQLite;
+using System.IO;
+using System;
 
 namespace Tabellarius.Database
 {
@@ -35,13 +35,18 @@ namespace Tabellarius.Database
 			}
 		}
 
-		public void DbUpdate(DatabaseTable oldElem, DatabaseTable newElem)
+		public void DbUpdate(DatabaseTable origElem, DatabaseTable newElem)
 		{
-			SQLiteCommand cmd = db.CreateCommand("UPDATE " + newElem.TableName +
-												" SET " + newElem.SETString() +
-												" WHERE " + oldElem.UPDATEString());
-			System.Console.WriteLine(cmd.CommandText);
-			System.Console.WriteLine();
+			if (origElem.GetType() != newElem.GetType())
+				throw new Exception("Inconsistent types"); // DEBUG
+
+			SQLiteCommand cmd = db.CreateCommand("UPDATE \n" + newElem.TableName +
+												" SET \n" + newElem.SETString() +
+												" WHERE \n" + origElem.IdString());
+			// Debug
+			Console.WriteLine("[SQL_UPDATE]");
+			Console.WriteLine(cmd.CommandText);
+			Console.WriteLine();
 			try {
 				cmd.ExecuteNonQuery();
 			} catch (SQLiteException e) {
@@ -54,32 +59,23 @@ namespace Tabellarius.Database
 			db.Delete(elem); // Does not throw an exception
 		}
 
-		private void MergeWith(SQLiteConnection otherDb)
+		public void NonQuery(string command)
 		{
-			if (this.db.Equals(otherDb)) {
-				new WarnWindow("Die Datenbanken sind identisch.");
-				return;
-			}
-			//var list = new List<DatabaseTable>();
-
-			//TODO: Merging!
-			//Veranstaltung
-			//Instanz
-			//Termin
-			//Beschreibung
-			//Text
-			//Text_Tab
-			//Tab_Inhalt
+			Console.WriteLine("[NonQuery]");
+			Console.WriteLine(command);
+			Console.WriteLine();
+			SQLiteCommand cmd = db.CreateCommand(command);
+			cmd.ExecuteNonQuery();
 		}
 
 		public void Close()
 		{
-			db.Commit();
 			db.Close();
 		}
 
 		private static void CreateNewDatabase(string dbName)
 		{
+			// TODO: Make again
 			File.Create(dbName);
 			var con = new SQLiteConnection(dbName);
 			//XXX: con.CreateTable<T> does not allow multiple PKs

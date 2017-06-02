@@ -51,23 +51,25 @@ namespace Tabellarius
 
 	public class API_Contract
 	{
-		public static Gtk.TextTag boldTag, italicTag;
-		public static Gdk.RGBA invalidColor, validColor;
+		public static readonly Gtk.TextTag boldTag, italicTag;
+		public static readonly Gdk.RGBA invalidColor, validColor;
+		public static readonly Gtk.TextTagTable TagTable = new Gtk.TextTagTable();
 
 		static API_Contract()
 		{
 			// Tags
-			boldTag = new Gtk.TextTag("bold");
-			italicTag = new Gtk.TextTag("italic");
-			boldTag.Weight = Pango.Weight.Bold;
-			italicTag.Style = Pango.Style.Italic;
+			boldTag = new Gtk.TextTag("bold") { Weight = Pango.Weight.Bold };
+			italicTag = new Gtk.TextTag("italic") {Style = Pango.Style.Italic };
+
+			// GC seems to kill @tagTable, is it's not static
+			TagTable.Add(API_Contract.boldTag);
+			TagTable.Add(API_Contract.italicTag);
 
 			// Colors
 			invalidColor.Red = invalidColor.Alpha = 1;
 			invalidColor.Blue = invalidColor.Green = 0;
 			validColor.Blue = validColor.Green = validColor.Red = validColor.Alpha = 1;
 		}
-
 
 		public static readonly string[] SupportedLanguages =
 		{
@@ -115,7 +117,6 @@ namespace Tabellarius
 			{ ProgrammTerminTypVal[4], (int)Contract_ProgrammTermin_Typ.ESSEN },
 			{ "", -1}
 		};
-
 
 		public static readonly string[] ProgrammDescrTypVal =
 		{
@@ -179,7 +180,6 @@ namespace Tabellarius
 		};
 
 
-
 		public static string ConvertTreeViewToEditView(string s)
 		{
 			return s.Substring(1).Replace("\\n", "\n");
@@ -195,12 +195,11 @@ namespace Tabellarius
 			return "\t" + s;
 		}
 
-
 		public static string ClearTimeConflicts(Gtk.TreeStore treeContent, Gtk.TreeIter toCheck)
 		{
 
 			// Get first Iter with equal time
-			var checkVal = (string)treeContent.GetValue(toCheck, (int)ProgrammColumnID.Uhrzeit);
+			string checkVal = (string)treeContent.GetValue(toCheck, (int)ProgrammColumnID.Uhrzeit);
 			Gtk.TreeIter before = toCheck;
 			Gtk.TreeIter drag = toCheck;
 			while (treeContent.IterPrevious(ref before)) {
@@ -228,7 +227,7 @@ namespace Tabellarius
 
 		private static void SetRang(Gtk.TreeStore store, Gtk.TreeIter iter, int rang)
 		{
-			var val = (string)store.GetValue(iter, (int)ProgrammColumnID.Uhrzeit);
+			string val = (string)store.GetValue(iter, (int)ProgrammColumnID.Uhrzeit);
 			store.SetValue(iter, (int)ProgrammColumnID.Uhrzeit, val.Substring(0, 5) + ":" + rang);
 		}
 
@@ -293,9 +292,6 @@ namespace Tabellarius
 				}
 			}
 			dbBuilder.Replace("\n", "<br>");
-
-			Console.WriteLine(dbBuilder);
-
 			return dbBuilder.ToString();
 		}
 

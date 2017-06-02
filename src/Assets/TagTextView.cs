@@ -6,21 +6,20 @@ namespace Tabellarius.Assets
 {
 	public class TagTextView : TextView
 	{
-
 		private readonly ToggleButton boldButton, italicButton;
-		private readonly HashSet<TextTag> applyTags;
-		private TextIter applyIter;
+		private readonly HashSet<TextTag> activeTags = new HashSet<TextTag>();
+		private TextIter applyIter = TextIter.Zero;
+		private TextTag BoldTag { get { return API_Contract.boldTag; } }
+		private TextTag ItalicTag { get { return API_Contract.italicTag; } }
 
-		public TagTextView(ToggleButton boldButton, ToggleButton italicButton) : base()
+
+		public TagTextView(ref ToggleButton boldButton, ref ToggleButton italicButton) : base(new TextBuffer(API_Contract.TagTable))
 		{
-			applyTags = new HashSet<TextTag>();
-			applyIter = TextIter.Zero;
-
 			this.boldButton = boldButton;
 			this.italicButton = italicButton;
 
-			boldButton.Clicked += TagButtonCLicked; // TODO: Shortcut
-			italicButton.Clicked += TagButtonCLicked; // TODO: Shortcut
+			boldButton.Clicked += TagButtonClicked; // TODO: Shortcut
+			italicButton.Clicked += TagButtonClicked; // TODO: Shortcut
 
 			this.KeyReleaseEvent += AdjustToggleState; // (Arrow) Keys
 			this.ButtonReleaseEvent += AdjustToggleState; // Clicked
@@ -28,16 +27,16 @@ namespace Tabellarius.Assets
 			Buffer.InsertText += InsertTextHandler;
 		}
 
-		private void TagButtonCLicked(object sender, EventArgs args)
+		private void TagButtonClicked(object sender, EventArgs args)
 		{
-			if (this.IsFocus) // Called by AdjustToggleState()
-				return; // Nothing to do then
+			if (this.IsFocus)
+				return;
 
-			this.IsFocus = true; // We still need a Cursor
+			this.IsFocus = true; // Get cursor back!
 
 			ToggleButton caller = (ToggleButton)sender;
 			TextTag checkTag = (caller == boldButton)
-								? API_Contract.boldTag : API_Contract.italicTag;
+								? BoldTag : ItalicTag;
 
 			TextIter startIt, endIt;
 			// Is text selected?
@@ -55,16 +54,16 @@ namespace Tabellarius.Assets
 						endIt.ForwardChar();
 
 				} else { // Somehwere between words
-						 // Apply tag when user writes on this offset
+					// Apply tag when user writes on this offset
 					applyIter = currIt;
 
 					foreach (var tag in currIt.Tags)
-						applyTags.Add(tag);
+						activeTags.Add(tag);
 
 					if (caller.Active) {
-						applyTags.Add(checkTag);
+						activeTags.Add(checkTag);
 					} else {
-						applyTags.Remove(checkTag);
+						activeTags.Remove(checkTag);
 					}
 					return; // User has to give new input
 				}
@@ -82,16 +81,16 @@ namespace Tabellarius.Assets
 			// CursorPosition got changed and buttons states need adjustment
 			TextIter currIter = Buffer.GetIterAtOffset(Buffer.CursorPosition);
 
-			if (currIter.Equals(applyIter)) {
-				// To applied tags are given by user
-				boldButton.Active = applyTags.Contains(API_Contract.boldTag);
-				italicButton.Active = applyTags.Contains(API_Contract.italicTag);
+			if (currIter.Equals(applyIter)) { // Bufferposition didn't change
+											  // To applied tags are given by user
+				boldButton.Active = activeTags.Contains(BoldTag);
+				italicButton.Active = activeTags.Contains(ItalicTag);
 			} else {
 				// To applied tags are given by text
-				applyTags.Clear();
+				activeTags.Clear();
 				applyIter = TextIter.Zero;
-				boldButton.Active = currIter.HasTag(API_Contract.boldTag);
-				italicButton.Active = currIter.HasTag(API_Contract.italicTag);
+				boldButton.Active = currIter.HasTag(BoldTag);
+				italicButton.Active = currIter.HasTag(ItalicTag);
 			}
 		}
 
@@ -103,14 +102,15 @@ namespace Tabellarius.Assets
 				// User wants special applied tags here
 				var endIt = args.Pos;
 				Buffer.RemoveAllTags(startIt, endIt);
-				foreach (var tag in applyTags)
+				foreach (var tag in activeTags)
 					Buffer.ApplyTag(tag, startIt, endIt);
 				applyIter = endIt; // Add CursorPosition
 			}
 		}
 
-		public void Clear() {
-			applyTags.Clear();
+		public void Clear()
+		{
+			activeTags.Clear();
 			applyIter = TextIter.Zero;
 			boldButton.Active = italicButton.Active = false;
 		}

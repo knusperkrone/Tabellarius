@@ -6,20 +6,17 @@ namespace Tabellarius.Assets
 	public class TimeBox : HBox
 	{
 
-		private Gdk.RGBA invalidColor { get { return API_Contract.invalidColor; } }
-		private Gdk.RGBA validColor { get { return API_Contract.validColor; } }
+		private static Gdk.RGBA invalidColor { get { return API_Contract.invalidColor; } }
+		private static Gdk.RGBA validColor { get { return API_Contract.validColor; } }
 
-		private readonly Label padLabel, hourLabel, minLabel, posLabel;
+		private Label padLabel; // optinal padding
+		private readonly Label hourLabel, minLabel, posLabel;
 		public readonly Entry hourEntry, minEntry, posEntry;
-
 		private string origHour, origMin, origPos;
+
 
 		public TimeBox(bool padding) : base()
 		{
-			origHour = origMin = origPos = "";
-
-			if (padding)
-				padLabel = new Label(""); // Padding
 			hourLabel = new Label(" Stunde");
 			minLabel = new Label(" Minute");
 			posLabel = new Label(" Rang");
@@ -27,6 +24,13 @@ namespace Tabellarius.Assets
 			hourEntry = new Entry();
 			minEntry = new Entry();
 			posEntry = new Entry();
+
+			origHour = origMin = origPos = "";
+
+			if (padding)
+				padLabel = new Label(""); // Padding
+
+
 			hourEntry.WidthChars = minEntry.WidthChars = posEntry.WidthChars = 5;
 
 

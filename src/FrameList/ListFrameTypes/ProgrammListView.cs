@@ -1,7 +1,4 @@
 using Gtk;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using Tabellarius.Database;
 using Tabellarius.Assets;
 
@@ -14,13 +11,11 @@ namespace Tabellarius.ListFrameTypes
 
 		protected override void PopulateTabView()
 		{
-			tabs = 0;
 			// Adding a Tab with (scrollable) TreeStore for every day
 			TreeStore dayQuery = dbAdapter.GetListFrameContentFor(tabs);
 			while (dayQuery != null) {
-				var tabContent = GenScrollableTree(dayQuery);
-				tabs++; // UI days start with 1
-				tabView.AppendPage(tabContent, new Label("Tag " + tabs));
+				var tabContent = GenerateTabContent(dayQuery);
+				AddTab(tabContent, "Tag " + (tabs + 1));
 				dayQuery = dbAdapter.GetListFrameContentFor(tabs);
 			}
 		}
@@ -29,10 +24,8 @@ namespace Tabellarius.ListFrameTypes
 		{
 			// AddDay() does not get saved in the database - just UI
 			var emptyStore = new TreeStore(typeof(string), typeof(string));
-			var tabContent = GenScrollableTree(emptyStore);
-			tabs++;
-			tabView.AppendPage(tabContent, new Label("Tag " + tabs));
-			tabView.ShowAll();
+			var tabContent = GenerateTabContent(emptyStore);
+			AddTab(tabContent, "Tag " + tabs + 1);
 		}
 
 		public override void AddParentEntry() // Add a Termin
@@ -57,7 +50,7 @@ namespace Tabellarius.ListFrameTypes
 					}
 				}
 				if (validated) { // There is valid user data
-					var treeContent = (TreeStore)(treeList[tabView.CurrentPage].Model);
+					var treeContent = CurrTreeStore;
 					string finalTime;
 					string tmpTime = timeBox.Time;
 					string text = textEntry.Text;
@@ -69,7 +62,7 @@ namespace Tabellarius.ListFrameTypes
 					GtkHelper.SortInByColumn(treeContent, (int)ProgrammColumnID.Uhrzeit, insertIter);
 					finalTime = API_Contract.ClearTimeConflicts(treeContent, insertIter);
 					// Save on Database
-					var insert = new Table_Termin(tabView.CurrentPage, finalTime, text, typ);
+					var insert = new Table_Termin(CurrTabIndex, finalTime, text, typ);
 					dbAdapter.InsertEntry(insert);
 				}
 			}
@@ -100,7 +93,7 @@ namespace Tabellarius.ListFrameTypes
 			var diag = new GetUserDataDialog(args, null, "Ok", 0, "Abbruch", 1);
 
 			if (diag.Run() == 0) {
-				var treeContent = (TreeStore)(treeList[tabView.CurrentPage].Model);
+				var treeContent = CurrTreeStore;
 				string text = textEntry.Text;
 				string typString = GtkHelper.ComboBoxActiveString(cbTyp);
 				int typ = cbTyp.Active;
@@ -111,7 +104,7 @@ namespace Tabellarius.ListFrameTypes
 				GtkHelper.SortInByColumn(treeContent, (int)ProgrammColumnID.Text, insertIter);
 				// XXX: Save on Database
 				string time = (string)treeContent.GetValue(parentIter, (int)ProgrammColumnID.Uhrzeit);
-				var insert = new Table_Beschreibung(tabView.CurrentPage, time, text, typ);
+				var insert = new Table_Beschreibung(CurrTabIndex, time, text, typ);
 				dbAdapter.InsertEntry(insert);
 			}
 			// Free Memory
@@ -120,35 +113,26 @@ namespace Tabellarius.ListFrameTypes
 				arg.Dispose();
 		}
 
-		protected override ScrolledWindow GenScrollableTree(TreeStore treeContent)
+		protected override TabContent GenerateTabContent(TreeStore treeContent)
 		{
-			var scrollWin = new ScrolledWindow();
-			scrollWin.ShadowType = ShadowType.EtchedOut;
-			scrollWin.SetPolicy(PolicyType.Automatic, PolicyType.Automatic);
+			var tc = RegisterTabContent();
 
 			var timeColumn = new TreeViewColumn(" Uhrzeit ", GenTextCell(), "text", ProgrammColumnID.Uhrzeit);
 			var textColumn = new TreeViewColumn("Text", GenTextCell(), "text", ProgrammColumnID.Text);
 			textColumn.Resizable = true;
 			var typColumn = new TreeViewColumn(" Typ ", GenTextCell(), "text", ProgrammColumnID.Typ);
 
-			var tree = new TreeView();
-			tree.AppendColumn(timeColumn);
-			tree.AppendColumn(textColumn);
-			tree.AppendColumn(typColumn);
-			tree.EnableGridLines = TreeViewGridLines.Both;
-			tree.HeadersClickable = false;
-			tree.HeadersVisible = true;
-			tree.Model = treeContent;
-			tree.RulesHint = true;
-			tree.RowActivated += delegate (object sender, RowActivatedArgs args)
+			tc.tree.AppendColumn(timeColumn);
+			tc.tree.AppendColumn(textColumn);
+			tc.tree.AppendColumn(typColumn);
+			tc.tree.HeadersVisible = true;
+			tc.tree.Model = treeContent;
+			tc.tree.RowActivated += delegate (object sender, RowActivatedArgs args)
 			{
-				editFrameAdapter.PassToEditView((TreeView)sender, args, tabView.CurrentPage);
+				editFrameAdapter.PassToEditView((TreeView)sender, args, CurrTabIndex);
 			};
 
-			this.treeList.Add(tree);
-
-			scrollWin.Add(tree);
-			return scrollWin;
+			return tc;
 		}
 
 	}
